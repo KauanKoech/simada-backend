@@ -1,4 +1,4 @@
-package com.simada_backend.main;
+package com.simada_backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

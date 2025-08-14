@@ -1,22 +1,15 @@
 package com.simada_backend.service;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.UserRecord;
+import com.simada_backend.model.Trainer;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
 
-    public String registrarTreinador(String nome, String email, String senha) throws Exception {
-        // Configuração para criar um usuário no Firebase
-        UserRecord.CreateRequest request = new UserRecord.CreateRequest()
-                .setDisplayName(nome)
-                .setEmail(email)
-                .setPassword(senha);
-
-        UserRecord userRecord = FirebaseAuth.getInstance().createUser(request);
-
-        // Retorna o UID gerado pelo Firebase
-        return userRecord.getUid();
+    public void registerTrainer(Trainer trainer) {
+        System.out.println("=== DADOS RECEBIDOS DO FRONT ===");
+        System.out.println("Nome: " + trainer.getFullName());
+        System.out.println("Email: " + trainer.getEmail());
+        System.out.println("Senha: " + trainer.getPassword());
     }
 }

@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Ignorar chave do Firebase
+src/main/resources/firebase-key.json
+
+# Configuração local sensível
+src/main/resources/application-local.properties

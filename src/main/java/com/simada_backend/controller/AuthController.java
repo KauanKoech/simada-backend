@@ -1,42 +1,31 @@
 package com.simada_backend.controller;
 
-import com.simada_backend.model.Athlete;
-import com.simada_backend.model.Trainer;
+import com.simada_backend.dto.*;
+import com.simada_backend.model.Usuario;
 import com.simada_backend.service.AuthService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = "http://localhost:3000") // permite o front consumir
+@CrossOrigin(origins = "http://localhost:3000")
 public class AuthController {
 
-    private final AuthService authService;
+    @Autowired
+    private AuthService authService;
 
-    public AuthController(AuthService authService) {
-        this.authService = authService;
+    @PostMapping("/register/trainer")
+    public void registerTrainer(@RequestBody RegisterTrainerRequest request) {
+        authService.registerTrainer(request);
     }
 
-    @PostMapping("/registerTrainer")
-    public String registerTrainer(@RequestBody Trainer trainer) {
-        authService.registerTrainer(trainer);
-        return "Dados recebidos com sucesso!";
+    @PostMapping("/register/athlete")
+    public void registerAthlete(@RequestBody RegisterAthleteRequest request) {
+        authService.registerAthlete(request);
     }
 
-    @PostMapping("/loginTrainer")
-    public String loginTrainer(@RequestBody Trainer trainer) {
-        authService.loginTrainer(trainer);
-        return "Dados recebidos com sucesso!";
-    }
-
-    @PostMapping("/registerAthlete")
-    public String registerAthlete(@RequestBody Athlete athlete) {
-        authService.registerAthlete(athlete);
-        return "Dados recebidos com sucesso!";
-    }
-
-    @PostMapping("/loginTrainer")
-    public String loginAthlete(@RequestBody Athlete athlete) {
-        authService.loginAthlete(athlete);
-        return "Dados recebidos com sucesso!";
+    @PostMapping("/login")
+    public Usuario login(@RequestBody LoginRequest request) {
+        return authService.login(request);
     }
 }

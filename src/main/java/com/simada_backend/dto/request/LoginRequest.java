@@ -1,4 +1,4 @@
-package com.simada_backend.dto;
+package com.simada_backend.dto.request;
 
 import lombok.Getter;
 import lombok.Setter;

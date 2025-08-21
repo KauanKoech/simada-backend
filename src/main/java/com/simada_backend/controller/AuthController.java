@@ -1,6 +1,8 @@
 package com.simada_backend.controller;
 
-import com.simada_backend.dto.*;
+import com.simada_backend.dto.request.LoginRequest;
+import com.simada_backend.dto.request.RegisterAthleteRequest;
+import com.simada_backend.dto.request.RegisterTrainerRequest;
 import com.simada_backend.model.Usuario;
 import com.simada_backend.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;

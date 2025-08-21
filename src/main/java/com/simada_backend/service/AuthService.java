@@ -1,32 +1,52 @@
 package com.simada_backend.service;
 
-import com.simada_backend.dto.*;
-import com.simada_backend.model.*;
-import com.simada_backend.repository.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.simada_backend.dto.request.LoginRequest;
+import com.simada_backend.dto.request.RegisterAthleteRequest;
+import com.simada_backend.dto.request.RegisterTrainerRequest;
+import com.simada_backend.model.Atleta;
+import com.simada_backend.model.Treinador;
+import com.simada_backend.model.Usuario;
+import com.simada_backend.repository.AtletaRepository;
+import com.simada_backend.repository.TreinadorRepository;
+import com.simada_backend.repository.UsuarioRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.Objects;
 
 @Service
 public class AuthService {
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final TreinadorRepository treinadorRepository;
+    private final AtletaRepository atletaRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private TreinadorRepository treinadorRepository;
+    public AuthService(UsuarioRepository usuarioRepository,
+                       TreinadorRepository treinadorRepository,
+                       AtletaRepository atletaRepository,
+                       PasswordEncoder passwordEncoder) {
+        this.usuarioRepository = Objects.requireNonNull(usuarioRepository);
+        this.treinadorRepository = Objects.requireNonNull(treinadorRepository);
+        this.atletaRepository = Objects.requireNonNull(atletaRepository);
+        this.passwordEncoder = Objects.requireNonNull(passwordEncoder);
+    }
 
-    @Autowired
-    private AtletaRepository atletaRepository;
-
+    @Transactional
     public void registerTrainer(RegisterTrainerRequest request) {
-        // Cria usuário
+        if (usuarioRepository.existsByEmail(request.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email já cadastrado");
+        }
+
         Usuario usuario = new Usuario();
         usuario.setEmail(request.getEmail());
-        usuario.setSenha(request.getPassword());
+        usuario.setSenha(passwordEncoder.encode(request.getPassword()));
         usuario.setTipoUsuario("treinador");
         usuarioRepository.save(usuario);
 
-        // Cria treinador associado
         Treinador treinador = new Treinador();
         treinador.setFullName(request.getFullName());
         treinador.setModality(request.getModality());
@@ -35,10 +55,15 @@ public class AuthService {
         treinadorRepository.save(treinador);
     }
 
+    @Transactional
     public void registerAthlete(RegisterAthleteRequest request) {
+        if (usuarioRepository.existsByEmail(request.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email já cadastrado");
+        }
+
         Usuario usuario = new Usuario();
         usuario.setEmail(request.getEmail());
-        usuario.setSenha(request.getPassword());
+        usuario.setSenha(passwordEncoder.encode(request.getPassword())); // BCrypt
         usuario.setTipoUsuario("atleta");
         usuarioRepository.save(usuario);
 
@@ -50,8 +75,14 @@ public class AuthService {
     }
 
     public Usuario login(LoginRequest request) {
-        return usuarioRepository.findByEmail(request.getEmail())
-                .filter(u -> u.getSenha().equals(request.getPassword()))
-                .orElse(null); // aqui você pode lançar exceção caso queira
+        Usuario user = usuarioRepository
+                .findFirstByEmailOrderByIdDesc(request.getEmail())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas"));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getSenha())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas");
+        }
+
+        return user;
     }
 }

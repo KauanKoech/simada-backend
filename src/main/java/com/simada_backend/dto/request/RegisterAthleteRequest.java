@@ -1,14 +1,16 @@
-package com.simada_backend.dto;
+package com.simada_backend.dto.request;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class RegisterTrainerRequest {
+public class RegisterAthleteRequest {
     private String email;
     private String password;
     private String fullName;
-    private String modality;
     private String gender;
+    private String modality;
+    private int shirtNumber;
+    private String position;
 }

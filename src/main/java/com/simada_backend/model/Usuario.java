@@ -17,6 +17,8 @@ public class Usuario {
 
     private String email;
     private String senha;
+    private String foto;
+    private String nome;
 
     @Column(name = "tipo_usuario")
     private String tipoUsuario;

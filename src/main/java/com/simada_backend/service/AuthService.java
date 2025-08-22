@@ -3,6 +3,7 @@ package com.simada_backend.service;
 import com.simada_backend.dto.request.LoginRequest;
 import com.simada_backend.dto.request.RegisterAthleteRequest;
 import com.simada_backend.dto.request.RegisterTrainerRequest;
+import com.simada_backend.dto.response.UsuarioResponseDTO;
 import com.simada_backend.model.Atleta;
 import com.simada_backend.model.Treinador;
 import com.simada_backend.model.Usuario;
@@ -42,8 +43,10 @@ public class AuthService {
         }
 
         Usuario usuario = new Usuario();
+        usuario.setNome(request.getFullName());
         usuario.setEmail(request.getEmail());
         usuario.setSenha(passwordEncoder.encode(request.getPassword()));
+        usuario.setFoto("");
         usuario.setTipoUsuario("treinador");
         usuarioRepository.save(usuario);
 
@@ -62,8 +65,10 @@ public class AuthService {
         }
 
         Usuario usuario = new Usuario();
+        usuario.setNome(request.getFullName());
         usuario.setEmail(request.getEmail());
-        usuario.setSenha(passwordEncoder.encode(request.getPassword())); // BCrypt
+        usuario.setSenha(passwordEncoder.encode(request.getPassword()));
+        usuario.setFoto("");
         usuario.setTipoUsuario("atleta");
         usuarioRepository.save(usuario);
 
@@ -74,7 +79,7 @@ public class AuthService {
         atletaRepository.save(atleta);
     }
 
-    public Usuario login(LoginRequest request) {
+    public UsuarioResponseDTO login(LoginRequest request) {
         Usuario user = usuarioRepository
                 .findFirstByEmailOrderByIdDesc(request.getEmail())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas"));
@@ -82,7 +87,7 @@ public class AuthService {
         if (!passwordEncoder.matches(request.getPassword(), user.getSenha())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas");
         }
-
-        return user;
+        return new UsuarioResponseDTO(user.getId(), user.getEmail(), user.getNome(),
+                user.getTipoUsuario(), user.getFoto());
     }
 }

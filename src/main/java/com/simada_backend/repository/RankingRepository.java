@@ -29,14 +29,12 @@ public interface RankingRepository extends Repository<Atleta, Integer> {
             )
             SELECT
               a.nome                              AS nome_atleta,
-              NULL                                AS foto,              -- ajuste se tiver coluna de foto
+              a.foto                              AS foto,
               r.data_atualizacao                  AS data_atualizacao,
               r.pontuacao                         AS pontuacao,
               r.ultima_pontuacao                  AS ultima_pontuacao
             FROM ranked r
             JOIN atleta a ON a.id_atleta = r.id_atleta
-            -- se quiser filtrar por treinador logado, descomente a linha abaixo e passe o parâmetro:
-            -- WHERE a.id_treinador = :trainerId
             WHERE r.rn = 1
             ORDER BY r.pontuacao DESC
             LIMIT :limit

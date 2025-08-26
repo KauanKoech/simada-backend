@@ -37,7 +37,7 @@ public class AuthService {
     }
 
     @Transactional
-    public void registerTrainer(RegisterTrainerRequest request) {
+    public UsuarioResponseDTO registerTrainer(RegisterTrainerRequest request) {
         if (usuarioRepository.existsByEmail(request.getEmail())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email já cadastrado");
         }
@@ -56,10 +56,13 @@ public class AuthService {
         treinador.setGender(request.getGender());
         treinador.setUsuario(usuario);
         treinadorRepository.save(treinador);
+
+        return new UsuarioResponseDTO(usuario.getId(), usuario.getEmail(), usuario.getNome(),
+                usuario.getTipoUsuario(), usuario.getFoto());
     }
 
     @Transactional
-    public void registerAthlete(RegisterAthleteRequest request) {
+    public UsuarioResponseDTO registerAthlete(RegisterAthleteRequest request) {
         if (usuarioRepository.existsByEmail(request.getEmail())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email já cadastrado");
         }
@@ -77,17 +80,20 @@ public class AuthService {
         atleta.setGender(request.getGender());
         atleta.setUsuario(usuario);
         atletaRepository.save(atleta);
+
+        return new UsuarioResponseDTO(usuario.getId(), usuario.getEmail(), usuario.getNome(),
+                usuario.getTipoUsuario(), usuario.getFoto());
     }
 
     public UsuarioResponseDTO login(LoginRequest request) {
-        Usuario user = usuarioRepository
+        Usuario usuario = usuarioRepository
                 .findFirstByEmailOrderByIdDesc(request.getEmail())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas"));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getSenha())) {
+        if (!passwordEncoder.matches(request.getPassword(), usuario.getSenha())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas");
         }
-        return new UsuarioResponseDTO(user.getId(), user.getEmail(), user.getNome(),
-                user.getTipoUsuario(), user.getFoto());
+        return new UsuarioResponseDTO(usuario.getId(), usuario.getEmail(), usuario.getNome(),
+                usuario.getTipoUsuario(), usuario.getFoto());
     }
 }

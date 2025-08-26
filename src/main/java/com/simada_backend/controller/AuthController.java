@@ -18,13 +18,13 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/register/trainer")
-    public void registerTrainer(@RequestBody RegisterTrainerRequest request) {
-        authService.registerTrainer(request);
+    public UsuarioResponseDTO registerTrainer(@RequestBody RegisterTrainerRequest request) {
+        return authService.registerTrainer(request);
     }
 
     @PostMapping("/register/athlete")
-    public void registerAthlete(@RequestBody RegisterAthleteRequest request) {
-        authService.registerAthlete(request);
+    public UsuarioResponseDTO registerAthlete(@RequestBody RegisterAthleteRequest request) {
+        return authService.registerAthlete(request);
     }
 
     @PostMapping("/login")

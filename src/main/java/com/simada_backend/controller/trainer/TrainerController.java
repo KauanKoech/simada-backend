@@ -1,16 +1,15 @@
-package com.simada_backend.controller;
+package com.simada_backend.controller.trainer;
 
 import com.simada_backend.dto.response.TopPerformerDTO;
 import com.simada_backend.service.TrainerService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/trainer")
+@RequestMapping("/api/trainer")
+@CrossOrigin(origins = "http://localhost:3000")
 public class TrainerController {
 
     private final TrainerService service;
@@ -24,6 +23,11 @@ public class TrainerController {
             @RequestParam(name = "limit", defaultValue = "3") int limit
     ) {
 
-        return service.getTopPerformers(limit /*, null */);
+        return service.getTopPerformers(limit);
+    }
+
+    @GetMapping("/stats")
+    public Map<String, Object> stats(@RequestParam int trainerId) {
+        return service.getTrainerStats(trainerId);
     }
 }

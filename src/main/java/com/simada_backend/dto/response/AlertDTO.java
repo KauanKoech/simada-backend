@@ -15,8 +15,14 @@ public record AlertDTO(
         String athleteName,
         String athletePhoto,
 
+        // PERFORMANCE (opcionais)
         Double prevValue,
         Double currValue,
         Double percent,
-        String unit
+        String unit,
+
+        // PSICO (opcionais)
+        String fatigue,
+        String mood,
+        Integer hoursSlept
 ) {}

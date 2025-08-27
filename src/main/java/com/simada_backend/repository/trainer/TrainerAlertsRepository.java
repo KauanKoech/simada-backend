@@ -20,10 +20,39 @@ public interface TrainerAlertsRepository extends JpaRepository<Sessao, Integer> 
               alet.acao_sugerida        AS action,
               atl.nome                  AS athlete_name,
               usr.foto                  AS athlete_photo,
+            
+              -- PERFORMANCE
               alet.valor_anterior       AS prev_value,
               alet.valor_atual          AS curr_value,
               alet.percentual           AS percent,
-              alet.unidade              AS unit
+              alet.unidade              AS unit,
+            
+              -- PSICO (pegas do questionário mais recente ligado à mesma métrica)
+              /* Ajuste os rótulos 'fatigue','mood','hours_slept' para os textos das suas perguntas */
+              CASE WHEN alet.tipo_alerta = 'PSICO' THEN (
+                SELECT rq.resposta_texto
+                FROM resposta_questionario rq
+                JOIN questionario q2 ON q2.id_questionario = rq.id_questionario
+                WHERE q2.id_metricas = m.id_metricas AND rq.pergunta = 'fatigue'
+                ORDER BY rq.id_resposta DESC LIMIT 1
+              ) ELSE NULL END AS fatigue,
+            
+              CASE WHEN alet.tipo_alerta = 'PSICO' THEN (
+                SELECT rq.resposta_texto
+                FROM resposta_questionario rq
+                JOIN questionario q2 ON q2.id_questionario = rq.id_questionario
+                WHERE q2.id_metricas = m.id_metricas AND rq.pergunta = 'mood'
+                ORDER BY rq.id_resposta DESC LIMIT 1
+              ) ELSE NULL END AS mood,
+            
+              CASE WHEN alet.tipo_alerta = 'PSICO' THEN (
+                SELECT CAST(rq.resposta_numerica AS SIGNED)
+                FROM resposta_questionario rq
+                JOIN questionario q2 ON q2.id_questionario = rq.id_questionario
+                WHERE q2.id_metricas = m.id_metricas AND rq.pergunta = 'hours_slept'
+                ORDER BY rq.id_resposta DESC LIMIT 1
+              ) ELSE NULL END AS hours_slept
+            
             FROM alertas alet
             JOIN metricas m       ON m.id_metricas   = alet.id_metricas
             JOIN atleta   atl     ON atl.id_atleta   = m.id_atleta
@@ -48,9 +77,16 @@ public interface TrainerAlertsRepository extends JpaRepository<Sessao, Integer> 
         String getAction();
         String getAthlete_name();
         String getAthlete_photo();
+
+        // PERFORMANCE
         Double getPrev_value();
         Double getCurr_value();
         Double getPercent();
         String getUnit();
+
+        // PSICO
+        String getFatigue();
+        String getMood();
+        Integer getHours_slept();
     }
 }

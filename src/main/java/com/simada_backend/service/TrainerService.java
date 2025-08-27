@@ -93,35 +93,61 @@ public class TrainerService {
 //                ))
 //                .toList();
 
-        return List.of(
-                new AlertDTO(
-                        1L,
-                        LocalDateTime.now().minusDays(1),
-                        "PERFORMANCE",
-                        "Alerta: queda de performance detectada",
-                        "ABERTO",
-                        "Recomendar descanso",
-                        "João Silva",
-                        "https://i.pravatar.cc/150?img=1",
-                        90.0,
-                        75.0,
-                        -16.6,
-                        "PlayerLoad"
-                ),
-                new AlertDTO(
-                        2L,
-                        LocalDateTime.now().minusDays(2),
-                        "PERFORMANCE",
-                        "Alerta: alta carga aguda detectada",
-                        "RESOLVIDO",
-                        "Reduzir intensidade",
-                        "Maria Souza",
-                        "https://i.pravatar.cc/150?img=2",
-                        60.0,
-                        95.0,
-                        +58.3,
-                        "ACWR"
-                )
-        );
+        if ("PSICO".equals(cat)) {
+            // MOCK PSICO
+            return List.of(
+                    new AlertDTO(
+                            101L,
+                            LocalDateTime.now().minusDays(1),
+                            "PSICO",
+                            "Fadiga elevada detectada no questionário diário",
+                            "CAUTION",
+                            "Rever carga desta semana",
+                            "João Silva",
+                            "https://i.pravatar.cc/150?img=3",
+                            null, null, null, null,
+                            "Alto", "Neutro", 5
+                    ),
+                    new AlertDTO(
+                            102L,
+                            LocalDateTime.now().minusDays(2),
+                            "PSICO",
+                            "Qualidade de sono abaixo do ideal",
+                            "LOW",
+                            "Orientar higiene do sono",
+                            "Maria Souza",
+                            "https://i.pravatar.cc/150?img=4",
+                            null, null, null, null,
+                            "Moderada", "Ruim", 4
+                    )
+            );
+        } else {
+            return List.of(
+                    new AlertDTO(
+                            1L,
+                            LocalDateTime.now().minusDays(1),
+                            "PERFORMANCE",
+                            "Alerta: queda de performance detectada",
+                            "ABERTO",
+                            "Recomendar descanso",
+                            "João Silva",
+                            "https://i.pravatar.cc/150?img=1",
+                            90.0, 75.0, -16.6, "PlayerLoad",   // performance
+                            null, null, null                   // psico
+                    ),
+                    new AlertDTO(
+                            2L,
+                            LocalDateTime.now().minusDays(2),
+                            "PERFORMANCE",
+                            "Alerta: alta carga aguda detectada",
+                            "RESOLVIDO",
+                            "Reduzir intensidade",
+                            "Maria Souza",
+                            "https://i.pravatar.cc/150?img=2",
+                            60.0, 95.0, 58.3, "ACWR",
+                            null, null, null
+                    )
+            );
+        }
     }
 }

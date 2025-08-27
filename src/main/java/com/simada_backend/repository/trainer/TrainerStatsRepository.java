@@ -1,4 +1,4 @@
-package com.simada_backend.repository;
+package com.simada_backend.repository.trainer;
 
 import com.simada_backend.model.Sessao;
 import org.springframework.data.jpa.repository.JpaRepository;

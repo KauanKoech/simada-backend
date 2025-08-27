@@ -1,5 +1,6 @@
 package com.simada_backend.controller.trainer;
 
+import com.simada_backend.dto.response.AlertDTO;
 import com.simada_backend.dto.response.TopPerformerDTO;
 import com.simada_backend.service.TrainerService;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,19 @@ public class TrainerController {
     }
 
     @GetMapping("/stats")
-    public Map<String, Object> stats(@RequestParam int trainerId) {
+    public Map<String, Object> stats(
+            @RequestParam int trainerId
+    ) {
         return service.getTrainerStats(trainerId);
+    }
+
+    @GetMapping("/alerts")
+    public List<AlertDTO> alerts(
+        @RequestParam int trainerId,
+        @RequestParam(defaultValue = "7") int days,
+        @RequestParam(defaultValue = "10") int limit,
+        @RequestParam(required = false) String category
+    ){
+        return service.getTrainerAlerts(trainerId, days, limit, category);
     }
 }

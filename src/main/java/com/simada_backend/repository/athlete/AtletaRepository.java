@@ -1,4 +1,4 @@
-package com.simada_backend.repository;
+package com.simada_backend.repository.athlete;
 
 import com.simada_backend.model.Atleta;
 import org.springframework.data.jpa.repository.JpaRepository;

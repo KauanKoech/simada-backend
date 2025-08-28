@@ -22,6 +22,9 @@ public class Sessao {
     @JoinColumn(name = "id_treinador", nullable = false)
     private Treinador treinador;
 
+    @Column(name = "foto_treinador", length = 255)
+    private String trainerPhoto;
+
     @Column(name = "data_hora_inicio", nullable = false)
     private LocalDateTime dataHoraInicio;
 
@@ -30,6 +33,12 @@ public class Sessao {
 
     @Column(name = "tipo_sessao", length = 45)
     private String tipoSessao;
+
+    @Column(name = "titulo", length = 45)
+    private String titulo;
+
+    @Column(name = "placar", length = 20)
+    private String placar;
 
     @Column(name = "descricao", length = 45)
     private String descricao;

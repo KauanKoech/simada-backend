@@ -2,8 +2,10 @@ package com.simada_backend.service;
 
 import com.simada_backend.dto.response.AlertDTO;
 import com.simada_backend.dto.response.TopPerformerDTO;
+import com.simada_backend.dto.response.TrainerSessionDTO;
 import com.simada_backend.repository.trainer.RankingRepository;
 import com.simada_backend.repository.trainer.TrainerAlertsRepository;
+import com.simada_backend.repository.trainer.TrainerSessionsRepository;
 import com.simada_backend.repository.trainer.TrainerStatsRepository;
 import org.springframework.stereotype.Service;
 
@@ -17,14 +19,18 @@ public class TrainerService {
     private final RankingRepository repo;
     private final TrainerStatsRepository statsRepo;
     private final TrainerAlertsRepository alertsRepo;
+    private final TrainerSessionsRepository sessionsRepo;
 
     public TrainerService(
             RankingRepository repo,
             TrainerStatsRepository trainerStatsRepository,
-            TrainerAlertsRepository alertsRepository) {
+            TrainerAlertsRepository alertsRepository,
+            TrainerSessionsRepository sessionsRepo
+    ) {
         this.repo = Objects.requireNonNull(repo);
         this.statsRepo = Objects.requireNonNull(trainerStatsRepository);
         this.alertsRepo = Objects.requireNonNull(alertsRepository);
+        this.sessionsRepo = Objects.requireNonNull(sessionsRepo);
     }
 
     public List<TopPerformerDTO> getTopPerformers(int limit) {
@@ -149,5 +155,97 @@ public class TrainerService {
                     )
             );
         }
+    }
+
+    public List<TrainerSessionDTO> getSessionsTrainer(int trainerId, LocalDateTime from,
+                                                      LocalDateTime to, int limit) {
+        int safeLimit = Math.max(1, Math.min(limit, 200));
+//        return sessionsRepo.findSessions(trainerId, from, to, safeLimit)
+//                .stream()
+//                .map(r -> new TrainerSessionDTO(
+//                        r.getId(),
+//                        r.getTrainer_id(),
+//                        r.getTrainer_photo(),
+//                        r.getStart(),
+//                        r.getEnd(),
+//                        r.getType(),
+//                        r.getTitle(),
+//                        r.getAthleteCount(),
+//                        r.getScore(),
+//                        r.getDescription(),
+//                        r.getLocation()
+//                ))
+//                .toList();
+
+        String photo = "https://i.pravatar.cc/150?img=10";
+        LocalDateTime now = LocalDateTime.now();
+
+        return List.of(
+                new TrainerSessionDTO(
+                        101L,
+                        (long) trainerId,
+                        photo,
+                        now.minusDays(1).withHour(18).withMinute(0).withSecond(0).withNano(0),
+                        now.minusDays(1).withHour(19).withMinute(30).withSecond(0).withNano(0),
+                        "training",
+                        "Treino — Força",
+                        20,
+                        null, // score (depois ligamos ao banco)
+                        "Trabalho de força e core",
+                        "Quadra A"
+                ),
+                new TrainerSessionDTO(
+                        102L,
+                        (long) trainerId,
+                        photo,
+                        now.minusDays(2).withHour(17).withMinute(0).withSecond(0).withNano(0),
+                        now.minusDays(2).withHour(18).withMinute(15).withSecond(0).withNano(0),
+                        "training",
+                        "Treino — Velocidade",
+                        22,
+                        null,
+                        "Sprints e pliometria",
+                        "Campo 1"
+                ),
+                new TrainerSessionDTO(
+                        103L,
+                        (long) trainerId,
+                        photo,
+                        now.minusDays(3).withHour(19).withMinute(0).withSecond(0).withNano(0),
+                        now.minusDays(3).withHour(20).withMinute(30).withSecond(0).withNano(0),
+                        "game",
+                        "Jogo — Amistoso vs. Tigres",
+                        14,
+                        "2–1", // exemplo de score preenchido em jogos
+                        "Amistoso de preparação",
+                        "Estádio Municipal"
+                ),
+                new TrainerSessionDTO(
+                        104L,
+                        (long) trainerId,
+                        photo,
+                        now.plusDays(1).withHour(18).withMinute(0).withSecond(0).withNano(0),
+                        now.plusDays(1).withHour(19).withMinute(0).withSecond(0).withNano(0),
+                        "training",
+                        "Treino — Tático",
+                        15,
+                        null,
+                        "Saída de bola e pressão alta",
+                        "Quadra B"
+                ),
+                new TrainerSessionDTO(
+                        105L,
+                        (long) trainerId,
+                        photo,
+                        now.plusDays(3).withHour(16).withMinute(30).withSecond(0).withNano(0),
+                        now.plusDays(3).withHour(18).withMinute(0).withSecond(0).withNano(0),
+                        "game",
+                        "Jogo — Campeonato Regional",
+                        13,
+                        "3-0",
+                        "Rodada 8",
+                        "Arena Central"
+                )
+        );
     }
 }

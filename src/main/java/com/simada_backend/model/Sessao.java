@@ -2,7 +2,8 @@ package com.simada_backend.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
+
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -23,13 +24,10 @@ public class Sessao {
     private Treinador treinador;
 
     @Column(name = "foto_treinador", length = 255)
-    private String trainerPhoto;
+    private String fotoTreinador;
 
-    @Column(name = "data_hora_inicio", nullable = false)
-    private LocalDateTime dataHoraInicio;
-
-    @Column(name = "data_hora_termino")
-    private LocalDateTime dataHoraTermino;
+    @Column(name = "data", nullable = false)
+    private LocalDate data;
 
     @Column(name = "tipo_sessao", length = 45)
     private String tipoSessao;
@@ -45,6 +43,9 @@ public class Sessao {
 
     @Column(name = "local", length = 45)
     private String local;
+
+    @Column(name = "num_atletas", length = 20)
+    private Integer numAtletas;
 
     @Override
     public boolean equals(Object o) {

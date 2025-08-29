@@ -1,0 +1,35 @@
+package com.simada_backend.dto.request;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+import jakarta.validation.constraints.*;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter @Setter
+public class RegisterSessionRequest {
+
+        @NotNull
+        @JsonAlias({"trainer_id", "trainerId"})
+        private Long trainerId;
+
+        @NotBlank
+        private String type;
+
+        @NotBlank
+        private String title;
+
+        @NotBlank
+        @JsonAlias({"date", "data"})
+        private String date;
+
+        @NotNull @Min(0)
+        @JsonAlias({"athletes_count", "athletesCount"})
+        private Integer athletesCount;
+
+        private String score;
+
+        @JsonAlias({"notes", "description"})
+        private String notes;
+
+        private String location;
+}

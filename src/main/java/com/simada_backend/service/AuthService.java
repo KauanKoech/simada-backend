@@ -8,7 +8,7 @@ import com.simada_backend.model.Atleta;
 import com.simada_backend.model.Treinador;
 import com.simada_backend.model.Usuario;
 import com.simada_backend.repository.athlete.AtletaRepository;
-import com.simada_backend.repository.trainer.TreinadorRepository;
+import com.simada_backend.repository.trainer.TrainerRepository;
 import com.simada_backend.repository.UsuarioRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,12 +22,12 @@ import java.util.Objects;
 public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
-    private final TreinadorRepository treinadorRepository;
+    private final TrainerRepository treinadorRepository;
     private final AtletaRepository atletaRepository;
     private final PasswordEncoder passwordEncoder;
 
     public AuthService(UsuarioRepository usuarioRepository,
-                       TreinadorRepository treinadorRepository,
+                       TrainerRepository treinadorRepository,
                        AtletaRepository atletaRepository,
                        PasswordEncoder passwordEncoder) {
         this.usuarioRepository = Objects.requireNonNull(usuarioRepository);

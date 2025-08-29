@@ -1,6 +1,7 @@
 package com.simada_backend.controller.trainer;
 
 import com.simada_backend.dto.response.AlertDTO;
+import com.simada_backend.dto.response.AthleteDTO;
 import com.simada_backend.dto.response.TopPerformerDTO;
 import com.simada_backend.dto.response.TrainerSessionDTO;
 import com.simada_backend.service.TrainerService;
@@ -57,5 +58,16 @@ public class TrainerController {
             @RequestParam(defaultValue = "50") int limit
     ) {
         return service.getSessionsTrainer(trainerId, from, to, limit);
+    }
+
+    @GetMapping("/athletes")
+    public List<AthleteDTO> myAthletes(
+            @RequestParam int trainerId,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "50") int limit,
+            @RequestParam(defaultValue = "0") int offset
+    ) {
+        return service.getAthletesTrainer(trainerId, q, status, limit, offset);
     }
 }

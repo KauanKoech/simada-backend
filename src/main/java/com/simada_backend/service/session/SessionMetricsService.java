@@ -1,5 +1,7 @@
 package com.simada_backend.service.session;
 
+import com.simada_backend.dto.request.UpdateSessionRequest;
+import com.simada_backend.dto.response.SessionDTO;
 import com.simada_backend.model.Atleta;
 import com.simada_backend.model.Metricas;
 import com.simada_backend.model.Sessao;
@@ -19,6 +21,9 @@ import jakarta.transaction.Transactional;
 import java.io.*;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @Service
@@ -180,6 +185,68 @@ public class SessionMetricsService {
         }
     }
 
+    @Transactional
+    public void updateSessionNotes(int sessionId, String description) {
+        if (description == null) {
+            description = "";
+        }
+        Sessao s = sessionsRepo.findById(sessionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sessão não encontrada"));
+        s.setDescricao(description);
+    }
+
+    @Transactional
+    public SessionDTO updateSession(int id, UpdateSessionRequest req) {
+        Sessao s = sessionsRepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sessão não encontrada"));
+
+        // type: "Training" | "Game"  -> BD: "treino" | "jogo"
+        if (req.type() != null && !req.type().isBlank()) {
+            s.setTipoSessao(mapTypeDbToApp(req.type()));
+        }
+
+        // title
+        if (req.title() != null) {
+            String t = req.title().trim();
+            if (t.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "title não pode ser vazio");
+            }
+            s.setTitulo(t);
+        }
+
+        // date: aceita "YYYY-MM-DD" ou ISO datetime
+        if (req.date() != null && !req.date().isBlank()) {
+            s.setData(parseDate(req.date()));
+        }
+
+        // score/description/location (aceita null para apagar)
+        if (req.score() != null) {
+            s.setPlacar(req.score().isBlank() ? null : req.score());
+        }
+        if (req.description() != null) {
+            s.setDescricao(req.description());
+        }
+        if (req.location() != null) {
+            s.setLocal(req.location());
+        }
+
+        Sessao saved = sessionsRepo.save(s);
+
+        // monta resposta no formato do app (type em "Training"/"Game")
+        return new SessionDTO(
+                saved.getIdSessao().longValue(),
+                saved.getTreinador() != null ? saved.getTreinador().getId() : null,
+                saved.getFotoTreinador(),
+                saved.getData(),
+                mapTypeDbToApp(saved.getTipoSessao()),
+                saved.getTitulo(),
+                saved.getNumAtletas(),
+                saved.getPlacar(),
+                saved.getDescricao(),
+                saved.getLocal()
+        );
+    }
+
     /* ------------ helpers ------------- */
 
     private static String get(CSVRecord r, String col) {
@@ -208,6 +275,7 @@ public class SessionMetricsService {
         }
         return content;
     }
+
     private static char detectDelimiter(String firstLine) {
         int commas = count(firstLine, ',');
         int semis = count(firstLine, ';');
@@ -244,9 +312,6 @@ public class SessionMetricsService {
         }
     }
 
-    /**
-     * Busca por nome+dorsal > nome > dorsal (usando os métodos do seu AtletaRepository).
-     */
     private Atleta resolveAtletaRepo(String playerName, Integer dorsal) {
         Atleta a = null;
         if (playerName != null && dorsal != null) {
@@ -264,5 +329,31 @@ public class SessionMetricsService {
                     "Atleta não encontrado: " + playerName + (dorsal != null ? (" (#" + dorsal + ")") : ""));
         }
         return a;
+    }
+
+    private String mapTypeDbToApp(String tipoDb) {
+        if (tipoDb == null) return "Training";
+        switch (tipoDb.toLowerCase()) {
+            case "treino": return "Training";
+            case "jogo":
+            case "game":   return "Game";
+            default:       return "Training";
+        }
+    }
+
+    private LocalDate parseDate(String raw) {
+        try {
+            return LocalDate.parse(raw);
+        } catch (DateTimeParseException e1) {
+            try {
+                // ISO datetime -> pega a data
+                return OffsetDateTime.parse(raw).toLocalDate();
+            } catch (DateTimeParseException e2) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Formato inválido para 'date' (use YYYY-MM-DD ou ISO datetime)"
+                );
+            }
+        }
     }
 }

@@ -1,5 +1,8 @@
 package com.simada_backend.controller.session;
 
+import com.simada_backend.dto.request.UpdateNotesRequest;
+import com.simada_backend.dto.request.UpdateSessionRequest;
+import com.simada_backend.dto.response.SessionDTO;
 import com.simada_backend.service.session.SessionMetricsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,5 +24,23 @@ public class SessionMetricsController {
     ) {
         service.importMetricsFromCsv(sessionId, file);
         return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/update/notes/{id}")
+    public ResponseEntity<Void> updateNotes(
+            @PathVariable int id,
+            @RequestBody UpdateNotesRequest body
+    ) {
+        service.updateSessionNotes(id, body.description());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<SessionDTO> update(
+            @PathVariable int id,
+            @RequestBody UpdateSessionRequest body
+    ) {
+        SessionDTO updated = service.updateSession(id, body);
+        return ResponseEntity.ok(updated);
     }
 }

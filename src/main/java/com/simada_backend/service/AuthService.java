@@ -75,15 +75,23 @@ public class AuthService {
         usuario.setTipoUsuario("atleta");
         usuarioRepository.save(usuario);
 
+        Treinador treinador = treinadorRepository.findById((long) request.getIdTrainer())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Treinador não encontrado"));
+
         Atleta atleta = new Atleta();
         atleta.setFullName(request.getFullName());
         atleta.setGender(request.getGender());
+        atleta.setModality(request.getModality());
+        atleta.setShirtNumber(request.getShirtNumber());
+        atleta.setPosition(request.getPosition());
         atleta.setUsuario(usuario);
+        atleta.setTreinador(treinador);
         atletaRepository.save(atleta);
 
         return new UsuarioResponseDTO(usuario.getId(), usuario.getEmail(), usuario.getNome(),
                 usuario.getTipoUsuario(), usuario.getFoto());
     }
+
 
     public UsuarioResponseDTO login(LoginRequest request) {
         Usuario usuario = usuarioRepository

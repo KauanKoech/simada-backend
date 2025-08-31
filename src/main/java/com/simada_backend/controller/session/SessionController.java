@@ -1,14 +1,14 @@
-package com.simada_backend.controller;
+package com.simada_backend.controller.session;
 
 import com.simada_backend.dto.request.RegisterSessionRequest;
-import com.simada_backend.dto.response.SessionDTO;
 import com.simada_backend.dto.response.TrainerSessionDTO;
-import com.simada_backend.service.SessionService;
+import com.simada_backend.service.session.SessionService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -26,16 +26,23 @@ public class SessionController {
     public List<TrainerSessionDTO> sessions(
             @RequestParam int trainerId,
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate from,
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate to,
             @RequestParam(defaultValue = "50") int limit
     ) {
         return sessionService.getSessionsTrainer(trainerId, from, to, limit);
     }
 
     @PostMapping("/register")
-    public SessionDTO registerTrainer(@Valid @RequestBody RegisterSessionRequest request) {
-        return sessionService.registerSession(request);
+    public ResponseEntity<Void> registerTrainer(@Valid @RequestBody RegisterSessionRequest request) {
+        sessionService.registerSession(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable int id) {
+        sessionService.deleteSession(id);
+        return ResponseEntity.noContent().build(); // 204
     }
 }

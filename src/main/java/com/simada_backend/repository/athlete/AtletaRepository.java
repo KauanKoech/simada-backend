@@ -3,4 +3,16 @@ package com.simada_backend.repository.athlete;
 import com.simada_backend.model.Atleta;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface AtletaRepository extends JpaRepository<Atleta, Long> {}
+import java.util.List;
+import java.util.Optional;
+
+public interface AtletaRepository extends JpaRepository<Atleta, Long> {
+    // Busca exata por nome
+    Optional<Atleta> findFirstByFullNameIgnoreCase(String fullName);
+
+    // Busca por dorsal
+    List<Atleta> findByShirtNumber(Integer shirtNumber);
+
+   // Combinar nome + dorsal p/ ser mais específico
+    Optional<Atleta> findFirstByFullNameIgnoreCaseAndShirtNumber(String fullName, Integer shirtNumber);
+}

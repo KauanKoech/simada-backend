@@ -1,13 +1,9 @@
 package com.simada_backend.controller;
 
-import com.simada_backend.dto.request.RegisterSessionRequest;
 import com.simada_backend.dto.response.*;
-import com.simada_backend.service.SessionService;
 import com.simada_backend.service.TrainerService;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 

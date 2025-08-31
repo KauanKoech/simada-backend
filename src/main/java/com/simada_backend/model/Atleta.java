@@ -12,7 +12,8 @@ public class Atleta {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "id_atleta")
+    private Long id_atleta;
 
     private String fullName;
     private String gender;
@@ -23,4 +24,8 @@ public class Atleta {
     @OneToOne
     @JoinColumn(name = "id_usuario")
     private Usuario usuario;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_treinador", nullable = false)
+    private Treinador treinador;
 }

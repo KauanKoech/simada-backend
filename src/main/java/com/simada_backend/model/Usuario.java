@@ -15,11 +15,17 @@ public class Usuario {
     @Column(name = "id_usuario")
     private Long id;
 
+    private String nome;
     private String email;
     private String senha;
     private String foto;
-    private String nome;
 
     @Column(name = "tipo_usuario")
     private String tipoUsuario;
+
+    @Column(name = "data_nascimento")
+    private java.time.LocalDate dataNascimento;
+
+    @Column(name = "telefone")
+    private String telefone;
 }

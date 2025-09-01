@@ -1,6 +1,8 @@
 package com.simada_backend.controller;
 
 import com.simada_backend.dto.response.*;
+import com.simada_backend.dto.response.athlete.AthleteDTO;
+import com.simada_backend.repository.trainer.TrainerRepository;
 import com.simada_backend.service.TrainerService;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,11 +15,12 @@ import java.util.Map;
 public class TrainerController {
 
     private final TrainerService trainerService;
+    private final TrainerRepository treinadorRepo;
 
-    public TrainerController(TrainerService service) {
-        this.trainerService = service;
+    public TrainerController(TrainerService trainerService, TrainerRepository treinadorRepo) {
+        this.trainerService = trainerService;
+        this.treinadorRepo = treinadorRepo;
     }
-
     @GetMapping("/top-performers")
     public List<TopPerformerDTO> topPerformers(
             @RequestParam(name = "limit", defaultValue = "3") int limit
@@ -45,12 +48,13 @@ public class TrainerController {
 
     @GetMapping("/athletes")
     public List<AthleteDTO> myAthletes(
-            @RequestParam int trainerId,
+            @RequestParam Integer trainerId,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "50") int limit,
             @RequestParam(defaultValue = "0") int offset
     ) {
-        return trainerService.getAthletesTrainer(trainerId, q, status, limit, offset);
+
+        return trainerService.getAthletesTrainer(trainerId, q, limit, offset);
     }
 }

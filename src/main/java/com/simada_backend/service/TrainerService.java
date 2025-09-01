@@ -1,9 +1,8 @@
 package com.simada_backend.service;
 
 import com.simada_backend.dto.response.AlertDTO;
-import com.simada_backend.dto.response.AthleteDTO;
+import com.simada_backend.dto.response.athlete.AthleteDTO;
 import com.simada_backend.dto.response.TopPerformerDTO;
-import com.simada_backend.dto.response.TrainerSessionDTO;
 import com.simada_backend.repository.session.TrainerSessionsRepository;
 import com.simada_backend.repository.trainer.*;
 import org.springframework.stereotype.Service;
@@ -157,31 +156,27 @@ public class TrainerService {
         }
     }
 
-    public List<AthleteDTO> getAthletesTrainer(int trainerId, String q, String status, int limit, int offset) {
+    public List<AthleteDTO> getAthletesTrainer(int trainerId, String q, int limit, int offset) {
         int safeLimit = Math.max(1, Math.min(limit, 200));
         int safeOffset = Math.max(0, offset);
 
-//        var rows = trainerAthletesRepo.findAthletes(trainerId,
-//                (q == null || q.isBlank()) ? null : q,
-//                (status == null || status.isBlank()) ? null : status,
-//                safeLimit, safeOffset);
 
-//        return rows.stream()
-//                .map(r -> new AthleteDTO(
-//                        r.getId(),
-//                        r.getName(),
-//                        r.getEmail(),
-//                        r.getBirth(),
-//                        r.getPhone(),
-//                        r.getAvatar_url(),
-//                        r.getStatus()
-//                ))
-//                .toList();
+        List<TrainerAthletesRepository.AthleteRow> rows =
+                trainerAthletesRepo.findAthletes(trainerId, (q == null || q.isBlank()) ? null : q, safeLimit, safeOffset);
 
-        return List.of(
-                new AthleteDTO(1L, "João Silva", "joao@ex.com", java.time.LocalDate.of(2001, 3, 15), "1199999-0001", "https://i.pravatar.cc/150?img=12", "active"),
-                new AthleteDTO(2L, "Maria Souza", "maria@ex.com", java.time.LocalDate.of(1999, 8, 30), "2198888-0002", "https://i.pravatar.cc/150?img=13", "injured"),
-                new AthleteDTO(3L, "Carlos Lima", "carlos@ex.com", java.time.LocalDate.of(2002, 1, 10), null, "https://i.pravatar.cc/150?img=14", "inactive")
-        );
+        return rows.stream()
+                .map(r -> new AthleteDTO(
+                        r.getId(),
+                        r.getName(),
+                        r.getEmail(),
+                        r.getBirth() != null ? r.getBirth().toString() : null,
+                        r.getPhone(),
+                        r.getShirt_number() != null ? String.valueOf(r.getShirt_number()) : null,
+                        r.getPosition(),
+                        r.getAvatar_url()
+                ))
+                .toList();
     }
+
+
 }

@@ -1,7 +1,7 @@
 package com.simada_backend.service;
 
 import com.simada_backend.dto.request.LoginRequest;
-import com.simada_backend.dto.request.RegisterAthleteRequest;
+import com.simada_backend.dto.request.athlete.RegisterAthleteRequest;
 import com.simada_backend.dto.request.RegisterTrainerRequest;
 import com.simada_backend.dto.response.UsuarioResponseDTO;
 import com.simada_backend.model.Atleta;

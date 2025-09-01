@@ -171,7 +171,7 @@ public class SessionMetricsService {
                 m.setRpe(tryParseBigDecimalPt(get(rec, COL_RPE)));
 
                 batch.add(m);
-                distinctAthleteIds.add(atleta.getId_atleta());
+                distinctAthleteIds.add(atleta.getIdAtleta());
             }
 
             // Persiste tudo

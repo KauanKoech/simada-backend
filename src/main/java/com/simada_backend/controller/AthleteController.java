@@ -4,6 +4,7 @@ import com.simada_backend.dto.request.athlete.UpdateAthleteRequest;
 import com.simada_backend.dto.response.athlete.AthleteDetailDTO;
 import com.simada_backend.service.AthleteService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -29,5 +30,11 @@ public class AthleteController {
             @RequestBody UpdateAthleteRequest body
     ) {
         return athleteService.updateAthlete(trainerId, athleteId, body);
+    }
+
+    @DeleteMapping("/athlete/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        athleteService.deleteAthlete(id);
+        return ResponseEntity.noContent().build(); // 204
     }
 }

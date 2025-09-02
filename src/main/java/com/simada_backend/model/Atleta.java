@@ -16,17 +16,15 @@ public class Atleta {
     private Long idAtleta;
 
     @Column(name = "nome")
-    private String fullName;
-
+    private String nome;
     @Column(name = "sexo")
-    private String gender;
-
+    private String sexo;
     @Column(name = "modalidade")
-    private String modality;
-
+    private String modalidade;
+    @Column(name = "posicao")
+    private String posicao;
     @Column(name = "numero_camisa")
-    private Integer shirtNumber;
-    private String position;
+    private Integer numeroCamisa;
 
     @OneToOne
     @JoinColumn(name = "id_usuario")

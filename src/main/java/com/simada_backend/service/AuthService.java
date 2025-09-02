@@ -79,11 +79,11 @@ public class AuthService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Treinador não encontrado"));
 
         Atleta atleta = new Atleta();
-        atleta.setFullName(request.getFullName());
-        atleta.setGender(request.getGender());
-        atleta.setModality(request.getModality());
-        atleta.setShirtNumber(request.getShirtNumber());
-        atleta.setPosition(request.getPosition());
+        atleta.setNome(request.getFullName());
+        atleta.setSexo(request.getGender());
+        atleta.setModalidade(request.getModality());
+        atleta.setNumeroCamisa(request.getShirtNumber());
+        atleta.setPosicao(request.getPosition());
         atleta.setUsuario(usuario);
         atleta.setTreinador(treinador);
         atletaRepository.save(atleta);

@@ -315,13 +315,13 @@ public class SessionMetricsService {
     private Atleta resolveAtletaRepo(String playerName, Integer dorsal) {
         Atleta a = null;
         if (playerName != null && dorsal != null) {
-            a = atletaRepo.findFirstByFullNameIgnoreCaseAndShirtNumber(playerName, dorsal).orElse(null);
+            a = atletaRepo.findFirstByNomeIgnoreCaseAndNumeroCamisa(playerName, dorsal).orElse(null);
         }
         if (a == null && playerName != null) {
-            a = atletaRepo.findFirstByFullNameIgnoreCase(playerName).orElse(null);
+            a = atletaRepo.findFirstByNomeIgnoreCase(playerName).orElse(null);
         }
         if (a == null && dorsal != null) {
-            List<Atleta> byNumber = atletaRepo.findByShirtNumber(dorsal);
+            List<Atleta> byNumber = atletaRepo.findByNumeroCamisa(dorsal);
             if (byNumber.size() == 1) a = byNumber.get(0);
         }
         if (a == null) {

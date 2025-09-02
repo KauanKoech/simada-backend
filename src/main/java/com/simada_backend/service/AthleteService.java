@@ -5,6 +5,7 @@ import com.simada_backend.dto.response.athlete.AthleteDetailDTO;
 import com.simada_backend.dto.response.athlete.AthleteExtraDTO;
 import com.simada_backend.model.Atleta;
 import com.simada_backend.model.AtletaExtra;
+import com.simada_backend.model.Sessao;
 import com.simada_backend.model.Usuario;
 import com.simada_backend.repository.UsuarioRepository;
 import com.simada_backend.repository.athlete.AtletaExtraRepository;
@@ -35,13 +36,13 @@ public class AthleteService {
 
         return new AthleteDetailDTO(
                 atleta.getIdAtleta(),
-                atleta.getFullName(),
+                atleta.getNome(),
                 u != null ? u.getEmail() : null,
                 u != null ? u.getTelefone() : null,
                 u != null && u.getDataNascimento() != null ? u.getDataNascimento().toString() : null,
                 u != null ? u.getFoto() : null,
-                atleta.getShirtNumber() != null ? String.valueOf(atleta.getShirtNumber()) : null,
-                mapDbPosToUi(atleta.getPosition()),
+                atleta.getNumeroCamisa() != null ? String.valueOf(atleta.getNumeroCamisa()) : null,
+                mapDbPosToUi(atleta.getPosicao()),
                 ex == null ? null : new AthleteExtraDTO(
                         ex.getHeightCm(), ex.getWeightKg(), ex.getLeanMassKg(), ex.getFatMassKg(),
                         ex.getBodyFatPct(), ex.getDominantFoot(), ex.getNationality(), ex.getInjuryStatus()
@@ -55,8 +56,8 @@ public class AthleteService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Atleta não encontrado para este treinador"));
 
         // Atualiza campos de Atleta
-        if (req.getName() != null) atleta.setFullName(req.getName());
-        if (req.getPosition() != null) atleta.setPosition(mapUiPosToDb(req.getPosition()));
+        if (req.getName() != null) atleta.setNome(req.getName());
+        if (req.getPosition() != null) atleta.setNome(mapUiPosToDb(req.getPosition()));
 
         // Atualiza dados do Usuario
         Usuario u = atleta.getUsuario();
@@ -97,6 +98,15 @@ public class AthleteService {
 
         atletaRepo.save(atleta);
         return getAthlete(trainerId, athleteId);
+    }
+
+    @Transactional
+    public void deleteAthlete(Long athleteId) {
+        Atleta a = atletaRepo.findById(athleteId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Atleta não encontrada"));
+
+        atletaRepo.deleteById(athleteId);
+        extraRepo.deleteById(athleteId);
     }
 
     private String mapUiPosToDb(String ui) {

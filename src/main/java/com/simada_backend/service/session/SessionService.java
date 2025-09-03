@@ -1,6 +1,6 @@
 package com.simada_backend.service.session;
 
-import com.simada_backend.dto.request.RegisterSessionRequest;
+import com.simada_backend.dto.request.session.RegisterSessionRequest;
 import com.simada_backend.dto.response.TrainerSessionDTO;
 import com.simada_backend.model.Sessao;
 import com.simada_backend.model.Treinador;

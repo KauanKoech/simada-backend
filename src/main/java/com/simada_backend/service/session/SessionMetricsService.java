@@ -1,6 +1,6 @@
 package com.simada_backend.service.session;
 
-import com.simada_backend.dto.request.UpdateSessionRequest;
+import com.simada_backend.dto.request.session.UpdateSessionRequest;
 import com.simada_backend.dto.response.SessionDTO;
 import com.simada_backend.model.Atleta;
 import com.simada_backend.model.Metricas;

@@ -1,4 +1,4 @@
-package com.simada_backend.controller;
+package com.simada_backend.controller.athlete;
 
 import com.simada_backend.dto.request.athlete.UpdateAthleteRequest;
 import com.simada_backend.dto.response.athlete.AthleteDetailDTO;

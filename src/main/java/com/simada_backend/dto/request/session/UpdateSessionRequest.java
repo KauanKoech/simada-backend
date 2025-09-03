@@ -1,4 +1,4 @@
-package com.simada_backend.dto.request;
+package com.simada_backend.dto.request.session;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 

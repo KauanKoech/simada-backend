@@ -42,7 +42,7 @@ public class AthleteService {
                 u != null && u.getDataNascimento() != null ? u.getDataNascimento().toString() : null,
                 u != null ? u.getFoto() : null,
                 atleta.getNumeroCamisa() != null ? String.valueOf(atleta.getNumeroCamisa()) : null,
-                mapDbPosToUi(atleta.getPosicao()),
+                atleta.getPosicao(),
                 ex == null ? null : new AthleteExtraDTO(
                         ex.getHeightCm(), ex.getWeightKg(), ex.getLeanMassKg(), ex.getFatMassKg(),
                         ex.getBodyFatPct(), ex.getDominantFoot(), ex.getNationality(), ex.getInjuryStatus()
@@ -55,11 +55,9 @@ public class AthleteService {
         Atleta atleta = atletaRepo.findByIdAtletaAndTreinador_Id(athleteId, trainerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Atleta não encontrado para este treinador"));
 
-        // Atualiza campos de Atleta
         if (req.getName() != null) atleta.setNome(req.getName());
-        if (req.getPosition() != null) atleta.setNome(mapUiPosToDb(req.getPosition()));
+        if (req.getPosition() != null) atleta.setPosicao(req.getPosition());
 
-        // Atualiza dados do Usuario
         Usuario u = atleta.getUsuario();
         if (u != null) {
             if (req.getEmail() != null) u.setEmail(req.getEmail());
@@ -109,25 +107,4 @@ public class AthleteService {
         extraRepo.deleteById(athleteId);
     }
 
-    private String mapUiPosToDb(String ui) {
-        if (ui == null) return null;
-        return switch (ui) {
-            case "Goalkeeper" -> "Goleiro";
-            case "Defender"   -> "Zagueiro";
-            case "Midfielder" -> "Meio Campo";
-            case "Forward"    -> "Atacante";
-            default -> ui;
-        };
-    }
-
-    private String mapDbPosToUi(String db) {
-        if (db == null) return null;
-        return switch (db) {
-            case "Goleiro"    -> "Goalkeeper";
-            case "Zagueiro"   -> "Defender";
-            case "Meio Campo" -> "Midfielder";
-            case "Atacante"   -> "Forward";
-            default -> db; // mantém se já vier EN
-        };
-    }
 }

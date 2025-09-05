@@ -8,7 +8,7 @@ public record AthleteExtraDTO(
         BigDecimal lean_mass_kg,
         BigDecimal fat_mass_kg,
         BigDecimal body_fat_pct,
-        String dominant_foot,     // Left | Right | Both
+        String dominant_foot,
         String nationality,
-        String injury_status      // Healthy | Injured | Rehab
+        String injury_status
 ) {}

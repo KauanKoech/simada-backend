@@ -1,6 +1,6 @@
 package com.simada_backend.repository.trainer;
 
-import com.simada_backend.model.Sessao;
+import com.simada_backend.model.session.Sessao;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,8 +20,8 @@ public interface TrainerStatsRepository extends JpaRepository<Sessao, Integer> {
                 SELECT COUNT(*) 
                 FROM sessao s
                 WHERE s.id_treinador = :trainerId
-                  AND s.tipo_sessao = 'treino'
-                  AND s.data_hora_termino IS NOT NULL
+                  AND s.tipo_sessao = 'Training'
+                  AND s.data < CURDATE()
             """, nativeQuery = true)
     long countCompletedTrainings(@Param("trainerId") int trainerId);
 
@@ -30,8 +30,8 @@ public interface TrainerStatsRepository extends JpaRepository<Sessao, Integer> {
                 SELECT COUNT(*)
                 FROM sessao s
                 WHERE s.id_treinador = :trainerId
-                  AND s.tipo_sessao = 'treino'
-                  AND YEARWEEK(s.data_hora_inicio, 1) = YEARWEEK(CURDATE(), 1)
+                  AND s.tipo_sessao = 'Training'
+                  AND YEARWEEK(s.data, 1) = YEARWEEK(CURDATE(), 1)
             """, nativeQuery = true)
     long countTrainingsThisWeek(@Param("trainerId") int trainerId);
 
@@ -40,8 +40,8 @@ public interface TrainerStatsRepository extends JpaRepository<Sessao, Integer> {
                 SELECT COUNT(*)
                 FROM sessao s
                 WHERE s.id_treinador = :trainerId
-                  AND s.tipo_sessao = 'jogo'
-                  AND s.data_hora_termino IS NOT NULL
+                  AND s.tipo_sessao = 'Game'
+                  AND s.data < CURDATE()
             """, nativeQuery = true)
     long countMatchesPlayed(@Param("trainerId") int trainerId);
 
@@ -50,9 +50,9 @@ public interface TrainerStatsRepository extends JpaRepository<Sessao, Integer> {
                 SELECT COUNT(*)
                 FROM sessao s
                 WHERE s.id_treinador = :trainerId
-                  AND s.tipo_sessao = 'jogo'
-                  AND YEAR(s.data_hora_inicio) = YEAR(CURDATE())
-                  AND MONTH(s.data_hora_inicio) = MONTH(CURDATE())
+                  AND s.tipo_sessao = 'Game'
+                  AND YEAR(s.data) = YEAR(CURDATE())
+                  AND MONTH(s.data) = MONTH(CURDATE())
             """, nativeQuery = true)
     long countMatchesThisMonth(@Param("trainerId") int trainerId);
 

@@ -13,5 +13,6 @@ public record TrainerSessionDTO(
         String score,
         String description,
         String location,
-        Boolean has_metrics
+        Boolean has_metrics,
+        Boolean has_psico
 ) {}

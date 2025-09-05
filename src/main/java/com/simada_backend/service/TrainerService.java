@@ -3,6 +3,8 @@ package com.simada_backend.service;
 import com.simada_backend.dto.response.AlertDTO;
 import com.simada_backend.dto.response.athlete.AthleteDTO;
 import com.simada_backend.dto.response.TopPerformerDTO;
+import com.simada_backend.dto.response.athlete.AthleteExtraDTO;
+import com.simada_backend.repository.athlete.AtletaExtraRepository;
 import com.simada_backend.repository.session.TrainerSessionsRepository;
 import com.simada_backend.repository.trainer.*;
 import org.springframework.stereotype.Service;
@@ -18,18 +20,21 @@ public class TrainerService {
     private final TrainerStatsRepository statsRepo;
     private final TrainerAlertsRepository alertsRepo;
     private final TrainerAthletesRepository trainerAthletesRepo;
+    private final AtletaExtraRepository athleteExtraRepo;
 
     public TrainerService(
             RankingRepository repo,
             TrainerStatsRepository trainerStatsRepository,
             TrainerAlertsRepository alertsRepository,
             TrainerSessionsRepository sessionsRepo,
-            TrainerAthletesRepository trainerAthletesRepo
+            TrainerAthletesRepository trainerAthletesRepo,
+            AtletaExtraRepository athleteExtraRepository
     ) {
         this.repo = Objects.requireNonNull(repo);
         this.statsRepo = Objects.requireNonNull(trainerStatsRepository);
         this.alertsRepo = Objects.requireNonNull(alertsRepository);
         this.trainerAthletesRepo = Objects.requireNonNull(trainerAthletesRepo);
+        this.athleteExtraRepo = Objects.requireNonNull(athleteExtraRepository);
     }
 
     public List<TopPerformerDTO> getTopPerformers(int limit) {
@@ -50,28 +55,20 @@ public class TrainerService {
     }
 
     public Map<String, Object> getTrainerStats(int trainerId) {
-//        long totalSessions = statsRepo.countTotalSessions(trainerId);
-//        long completedTrainings = statsRepo.countCompletedTrainings(trainerId);
-//        long trainingsThisWeek = statsRepo.countTrainingsThisWeek(trainerId);
-//        long matchesPlayed = statsRepo.countMatchesPlayed(trainerId);
-//        long matchesThisMonth = statsRepo.countMatchesThisMonth(trainerId);
-//        long totalAthletes = statsRepo.countTotalAthletes(trainerId);
+        long totalSessions = statsRepo.countTotalSessions(trainerId);
+        long completedTrainings = statsRepo.countCompletedTrainings(trainerId);
+        long trainingsThisWeek = statsRepo.countTrainingsThisWeek(trainerId);
+        long matchesPlayed = statsRepo.countMatchesPlayed(trainerId);
+        long matchesThisMonth = statsRepo.countMatchesThisMonth(trainerId);
+        long totalAthletes = statsRepo.countTotalAthletes(trainerId);
 
-//        return Map.of(
-//                "completedTrainings", completedTrainings,
-//                "trainingsThisWeek", trainingsThisWeek,
-//                "matchesPlayed", matchesPlayed,
-//                "matchesThisMonth", matchesThisMonth,
-//                "totalSessions", totalSessions,
-//                "totalAthletes", totalAthletes
-//        );
         return Map.of(
-                "completedTraining", 20,
-                "trainingThisWeek", 2,
-                "matchesPlayed", 10,
-                "matchesThisMonth", 2,
-                "totalSessions", 30,
-                "totalAthletes", 25
+                "completedTrainings", completedTrainings,
+                "trainingsThisWeek", trainingsThisWeek,
+                "matchesPlayed", matchesPlayed,
+                "matchesThisMonth", matchesThisMonth,
+                "totalSessions", totalSessions,
+                "totalAthletes", totalAthletes
         );
     }
 
@@ -98,13 +95,13 @@ public class TrainerService {
 //                ))
 //                .toList();
 
-        if ("PSICO".equals(cat)) {
-            // MOCK PSICO
+        if ("PSYCHO".equals(cat)) {
+            // MOCK PSYCHO
             return List.of(
                     new AlertDTO(
                             101L,
                             LocalDateTime.now().minusDays(1),
-                            "PSICO",
+                            "PSYCHO",
                             "Fadiga elevada detectada no questionário diário",
                             "CAUTION",
                             "Rever carga desta semana",
@@ -116,7 +113,7 @@ public class TrainerService {
                     new AlertDTO(
                             102L,
                             LocalDateTime.now().minusDays(2),
-                            "PSICO",
+                            "PSYCHO",
                             "Qualidade de sono abaixo do ideal",
                             "LOW",
                             "Orientar higiene do sono",
@@ -160,23 +157,36 @@ public class TrainerService {
         int safeLimit = Math.max(1, Math.min(limit, 200));
         int safeOffset = Math.max(0, offset);
 
-
         List<TrainerAthletesRepository.AthleteRow> rows =
                 trainerAthletesRepo.findAthletes(trainerId, (q == null || q.isBlank()) ? null : q, safeLimit, safeOffset);
 
-        return rows.stream()
-                .map(r -> new AthleteDTO(
-                        r.getId(),
-                        r.getName(),
-                        r.getEmail(),
-                        r.getBirth() != null ? r.getBirth().toString() : null,
-                        r.getPhone(),
-                        r.getShirt_number() != null ? String.valueOf(r.getShirt_number()) : null,
-                        r.getPosition(),
-                        r.getAvatar_url()
-                ))
-                .toList();
-    }
+        return rows.stream().map(r -> {
+            // Buscar extras do atleta
+            var extraOpt = athleteExtraRepo.findByAtleta_IdAtleta(r.getId());
 
+            AthleteExtraDTO extra = extraOpt.map(e -> new AthleteExtraDTO(
+                    e.getHeightCm(),
+                    e.getWeightKg(),
+                    e.getLeanMassKg(),
+                    e.getFatMassKg(),
+                    e.getBodyFatPct(),
+                    e.getDominantFoot(),
+                    e.getNationality(),
+                    e.getInjuryStatus()
+            )).orElse(null);
+
+            return new AthleteDTO(
+                    r.getId(),
+                    r.getName(),
+                    r.getEmail(),
+                    r.getBirth() != null ? r.getBirth().toString() : null,
+                    r.getPhone(),
+                    r.getShirt_number() != null ? String.valueOf(r.getShirt_number()) : null,
+                    r.getPosition(),
+                    r.getAvatar_url(),
+                    extra
+            );
+        }).toList();
+    }
 
 }

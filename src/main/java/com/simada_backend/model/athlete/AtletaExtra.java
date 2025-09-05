@@ -1,4 +1,4 @@
-package com.simada_backend.model;
+package com.simada_backend.model.athlete;
 
 import jakarta.persistence.*;
 import lombok.*;

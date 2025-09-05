@@ -1,6 +1,6 @@
 package com.simada_backend.repository.session;
 
-import com.simada_backend.model.Sessao;
+import com.simada_backend.model.session.Sessao;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,7 +22,8 @@ public interface TrainerSessionsRepository extends JpaRepository<Sessao, Integer
           s.placar           AS score,
           s.descricao        AS description,
           s.local            AS location,
-          CASE WHEN COUNT(m.id_metricas) > 0 THEN 1 ELSE 0 END AS has_metrics   
+          CASE WHEN COUNT(DISTINCT m.id_metricas) > 0 THEN 1 ELSE 0 END AS has_metrics,
+          CASE WHEN EXISTS (SELECT 1 FROM psico_form_convite p WHERE p.id_sessao = s.id_sessao) THEN 1 ELSE 0 END AS has_psycho
         FROM sessao s
         LEFT JOIN metricas m ON m.id_sessao = s.id_sessao
         WHERE s.id_treinador = :trainerId
@@ -41,7 +42,7 @@ public interface TrainerSessionsRepository extends JpaRepository<Sessao, Integer
             @Param("limit") int limit
     );
 
-    interface SessionRow {
+    public interface SessionRow {
         Long getId();
         Long getTrainer_id();
         String getTrainer_photo();
@@ -53,5 +54,7 @@ public interface TrainerSessionsRepository extends JpaRepository<Sessao, Integer
         String getDescription();
         String getLocation();
         Integer getHas_metrics();
+        Integer getHas_psycho();
     }
+
 }

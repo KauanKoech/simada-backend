@@ -4,7 +4,7 @@ import com.simada_backend.dto.request.LoginRequest;
 import com.simada_backend.dto.request.athlete.RegisterAthleteRequest;
 import com.simada_backend.dto.request.RegisterTrainerRequest;
 import com.simada_backend.dto.response.UsuarioResponseDTO;
-import com.simada_backend.model.Atleta;
+import com.simada_backend.model.athlete.Atleta;
 import com.simada_backend.model.Treinador;
 import com.simada_backend.model.Usuario;
 import com.simada_backend.repository.athlete.AtletaRepository;

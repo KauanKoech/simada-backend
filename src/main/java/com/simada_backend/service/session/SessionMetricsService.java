@@ -2,9 +2,9 @@ package com.simada_backend.service.session;
 
 import com.simada_backend.dto.request.session.UpdateSessionRequest;
 import com.simada_backend.dto.response.SessionDTO;
-import com.simada_backend.model.Atleta;
-import com.simada_backend.model.Metricas;
-import com.simada_backend.model.Sessao;
+import com.simada_backend.model.athlete.Atleta;
+import com.simada_backend.model.session.Metricas;
+import com.simada_backend.model.session.Sessao;
 import com.simada_backend.repository.athlete.AtletaRepository;
 import com.simada_backend.repository.session.MetricasRepository;
 import com.simada_backend.repository.session.TrainerSessionsRepository;
@@ -129,6 +129,13 @@ public class SessionMetricsService {
 
                 //Resolve atleta (repo -> por nome+dorsal, nome, dorsal)
                 Atleta atleta = resolveAtletaRepo(playerName, dorsal);
+                if (atleta == null) {
+                    throw new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "Linha " + row + ": atleta '" + playerName +
+                                    "' (camisa " + (dorsal != null ? dorsal : "?") + ") não encontrado no banco de dados"
+                    );
+                }
 
                 // Garante que o atleta pertence ao mesmo treinador da sessão
                 if (atleta.getTreinador() == null || !Objects.equals(atleta.getTreinador().getId(), trainerId)) {
@@ -334,10 +341,13 @@ public class SessionMetricsService {
     private String mapTypeDbToApp(String tipoDb) {
         if (tipoDb == null) return "Training";
         switch (tipoDb.toLowerCase()) {
-            case "treino": return "Training";
+            case "treino":
+                return "Training";
             case "jogo":
-            case "game":   return "Game";
-            default:       return "Training";
+            case "game":
+                return "Game";
+            default:
+                return "Training";
         }
     }
 

@@ -1,6 +1,6 @@
 package com.simada_backend.repository.trainer;
 
-import com.simada_backend.model.Atleta;
+import com.simada_backend.model.athlete.Atleta;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;

@@ -1,7 +1,7 @@
 package com.simada_backend.controller.athlete;
 
 import com.simada_backend.dto.request.athlete.InviteRequest;
-import com.simada_backend.service.InviteService;
+import com.simada_backend.service.athlete.InviteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

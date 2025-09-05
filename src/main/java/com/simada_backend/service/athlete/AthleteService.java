@@ -1,15 +1,15 @@
-package com.simada_backend.service;
+package com.simada_backend.service.athlete;
 
 import com.simada_backend.dto.request.athlete.UpdateAthleteRequest;
 import com.simada_backend.dto.response.athlete.AthleteDetailDTO;
 import com.simada_backend.dto.response.athlete.AthleteExtraDTO;
-import com.simada_backend.model.Atleta;
-import com.simada_backend.model.AtletaExtra;
-import com.simada_backend.model.Sessao;
+import com.simada_backend.model.athlete.Atleta;
+import com.simada_backend.model.athlete.AtletaExtra;
 import com.simada_backend.model.Usuario;
 import com.simada_backend.repository.UsuarioRepository;
 import com.simada_backend.repository.athlete.AtletaExtraRepository;
 import com.simada_backend.repository.athlete.AtletaRepository;
+import com.simada_backend.repository.athlete.ConviteAtletaRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,6 +25,7 @@ public class AthleteService {
     private final AtletaRepository atletaRepo;
     private final AtletaExtraRepository extraRepo;
     private final UsuarioRepository usuarioRepo;
+    private final ConviteAtletaRepository convRepo;
 
     @Transactional
     public AthleteDetailDTO getAthlete(Long trainerId, Long athleteId) {
@@ -105,6 +106,8 @@ public class AthleteService {
 
         atletaRepo.deleteById(athleteId);
         extraRepo.deleteById(athleteId);
+        convRepo.deleteByEmail(a.getUsuario().getEmail());
+        usuarioRepo.delete(a.getUsuario());
     }
 
 }

@@ -8,5 +8,6 @@ public record AthleteDTO(
         String phone,
         String shirt_number,
         String position,
-        String avatarUrl
+        String avatarUrl,
+        AthleteExtraDTO extra
 ) {}

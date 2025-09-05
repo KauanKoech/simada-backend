@@ -1,5 +1,6 @@
-package com.simada_backend.model;
+package com.simada_backend.model.athlete.invite;
 
+import com.simada_backend.model.Treinador;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,7 +31,7 @@ public class ConviteAtleta {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private InvitationStatus status = InvitationStatus.PENDING;
+    private StatusConvite status = StatusConvite.PENDING;
 
     @Column(name = "expira_em", nullable = false)
     private LocalDateTime expiresAt;

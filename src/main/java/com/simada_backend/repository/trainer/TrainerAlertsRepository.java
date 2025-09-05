@@ -1,6 +1,6 @@
 package com.simada_backend.repository.trainer;
 
-import com.simada_backend.model.Sessao;
+import com.simada_backend.model.session.Sessao;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,7 +29,7 @@ public interface TrainerAlertsRepository extends JpaRepository<Sessao, Integer> 
             
               -- PSICO (pegas do questionário mais recente ligado à mesma métrica)
               /* Ajuste os rótulos 'fatigue','mood','hours_slept' para os textos das suas perguntas */
-              CASE WHEN alet.tipo_alerta = 'PSICO' THEN (
+              CASE WHEN alet.tipo_alerta = 'PSYCHO' THEN (
                 SELECT rq.resposta_texto
                 FROM resposta_questionario rq
                 JOIN questionario q2 ON q2.id_questionario = rq.id_questionario
@@ -37,7 +37,7 @@ public interface TrainerAlertsRepository extends JpaRepository<Sessao, Integer> 
                 ORDER BY rq.id_resposta DESC LIMIT 1
               ) ELSE NULL END AS fatigue,
             
-              CASE WHEN alet.tipo_alerta = 'PSICO' THEN (
+              CASE WHEN alet.tipo_alerta = 'PSYCHO' THEN (
                 SELECT rq.resposta_texto
                 FROM resposta_questionario rq
                 JOIN questionario q2 ON q2.id_questionario = rq.id_questionario
@@ -45,7 +45,7 @@ public interface TrainerAlertsRepository extends JpaRepository<Sessao, Integer> 
                 ORDER BY rq.id_resposta DESC LIMIT 1
               ) ELSE NULL END AS mood,
             
-              CASE WHEN alet.tipo_alerta = 'PSICO' THEN (
+              CASE WHEN alet.tipo_alerta = 'PSYCHO' THEN (
                 SELECT CAST(rq.resposta_numerica AS SIGNED)
                 FROM resposta_questionario rq
                 JOIN questionario q2 ON q2.id_questionario = rq.id_questionario

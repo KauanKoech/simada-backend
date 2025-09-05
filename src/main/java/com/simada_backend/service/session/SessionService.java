@@ -2,7 +2,7 @@ package com.simada_backend.service.session;
 
 import com.simada_backend.dto.request.session.RegisterSessionRequest;
 import com.simada_backend.dto.response.TrainerSessionDTO;
-import com.simada_backend.model.Sessao;
+import com.simada_backend.model.session.Sessao;
 import com.simada_backend.model.Treinador;
 import com.simada_backend.repository.session.MetricasRepository;
 import com.simada_backend.repository.session.TrainerSessionsRepository;
@@ -49,7 +49,8 @@ public class SessionService {
                         r.getScore(),
                         r.getDescription(),
                         r.getLocation(),
-                        r.getHas_metrics() != null && r.getHas_metrics() > 0
+                        r.getHas_metrics() != null && r.getHas_metrics() > 0,
+                        r.getHas_psycho() != null && r.getHas_psycho() > 0
                 ))
                 .toList();
 

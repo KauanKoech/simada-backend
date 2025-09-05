@@ -1,10 +1,9 @@
 package com.simada_backend.repository.trainer;
 
-import com.simada_backend.model.Atleta;
+import com.simada_backend.model.athlete.Atleta;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDate;
 import java.util.List;
 
 public interface TrainerAthletesRepository extends JpaRepository<Atleta, Long> {

@@ -1,5 +1,7 @@
-package com.simada_backend.model;
+package com.simada_backend.model.athlete;
 
+import com.simada_backend.model.Treinador;
+import com.simada_backend.model.Usuario;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

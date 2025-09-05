@@ -1,21 +1,22 @@
-package com.simada_backend.service;
+package com.simada_backend.service.athlete;
 
-import com.simada_backend.model.Atleta;
-import com.simada_backend.model.ConviteAtleta;
-import com.simada_backend.model.InvitationStatus;
+import com.simada_backend.model.athlete.Atleta;
+import com.simada_backend.model.athlete.invite.ConviteAtleta;
+import com.simada_backend.model.athlete.invite.StatusConvite;
 import com.simada_backend.model.Usuario;
 import com.simada_backend.repository.UsuarioRepository;
 import com.simada_backend.repository.athlete.AtletaRepository;
 import com.simada_backend.repository.athlete.ConviteAtletaRepository;
-import com.simada_backend.repository.trainer.TrainerAthletesRepository;
 import com.simada_backend.repository.trainer.TrainerRepository;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.mail.javamail.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.security.SecureRandom;
 import java.time.LocalDate;
@@ -50,7 +51,7 @@ public class InviteService {
         var trainer = trainerRepo.findById(trainerId)
                 .orElseThrow(() -> new IllegalArgumentException("Trainer not found"));
 
-        var existing = invitationRepo.findFirstByTrainer_IdAndEmailAndStatus(trainerId, email, InvitationStatus.PENDING)
+        var existing = invitationRepo.findFirstByTrainer_IdAndEmailAndStatus(trainerId, email, StatusConvite.PENDING)
                 .orElse(null);
 
         if (existing != null && existing.getExpiresAt().isAfter(LocalDateTime.now())) {
@@ -58,16 +59,23 @@ public class InviteService {
             return existing;
         }
 
-        var inv = new ConviteAtleta();
-        inv.setTrainer(trainer);
-        inv.setEmail(email);
-        inv.setToken(newToken());
-        inv.setStatus(InvitationStatus.PENDING);
-        inv.setExpiresAt(LocalDateTime.now().plusDays(ttlDays));
-        inv = invitationRepo.save(inv);
+        try {
+            var inv = new ConviteAtleta();
+            inv.setTrainer(trainer);
+            inv.setEmail(email);
+            inv.setToken(newToken());
+            inv.setStatus(StatusConvite.PENDING);
+            inv.setExpiresAt(LocalDateTime.now().plusDays(ttlDays));
+            inv = invitationRepo.save(inv);
 
-        sendEmail(inv, trainer.getFullName());
-        return inv;
+            sendEmail(inv, trainer.getFullName());
+            return inv;
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Este atleta já foi convidado por este treinador."
+            );
+        }
     }
 
     private void sendEmail(ConviteAtleta inv, String trainerName) {
@@ -99,9 +107,9 @@ public class InviteService {
     public InviteInfo validateToken(String token) {
         var inv = invitationRepo.findByToken(token)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid invite"));
-        if (inv.getStatus() != InvitationStatus.PENDING) throw new IllegalStateException("Invite no longer valid");
+        if (inv.getStatus() != StatusConvite.PENDING) throw new IllegalStateException("Invite no longer valid");
         if (inv.getExpiresAt().isBefore(LocalDateTime.now())) {
-            inv.setStatus(InvitationStatus.EXPIRED);
+            inv.setStatus(StatusConvite.EXPIRED);
             invitationRepo.save(inv);
             throw new IllegalStateException("Invite expired");
         }
@@ -115,7 +123,7 @@ public class InviteService {
         ConviteAtleta inv = invitationRepo.findByToken(token)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid invite token"));
 
-        if (inv.getStatus().equals(InvitationStatus.ACCEPTED) || inv.getExpiresAt().isBefore(LocalDateTime.now())) {
+        if (inv.getStatus().equals(StatusConvite.ACCEPTED) || inv.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Invite expired or already used");
         }
 
@@ -145,7 +153,7 @@ public class InviteService {
         a = athleteRepo.save(a);
 
         // 3) Convite
-        inv.setStatus(InvitationStatus.ACCEPTED);
+        inv.setStatus(StatusConvite.ACCEPTED);
         inv.setAcceptedAt(LocalDateTime.now());
         invitationRepo.save(inv);
 

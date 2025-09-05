@@ -2,7 +2,7 @@ package com.simada_backend.controller.athlete;
 
 import com.simada_backend.dto.request.athlete.UpdateAthleteRequest;
 import com.simada_backend.dto.response.athlete.AthleteDetailDTO;
-import com.simada_backend.service.AthleteService;
+import com.simada_backend.service.athlete.AthleteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

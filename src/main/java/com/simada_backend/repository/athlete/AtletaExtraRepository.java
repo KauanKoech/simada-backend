@@ -1,6 +1,6 @@
 package com.simada_backend.repository.athlete;
 
-import com.simada_backend.model.AtletaExtra;
+import com.simada_backend.model.athlete.AtletaExtra;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

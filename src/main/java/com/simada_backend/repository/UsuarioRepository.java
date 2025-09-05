@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     boolean existsByEmail(String email);
     Optional<Usuario> findFirstByEmailOrderByIdDesc(String email);
+
 }

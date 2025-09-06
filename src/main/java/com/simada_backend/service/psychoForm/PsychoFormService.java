@@ -1,6 +1,7 @@
 package com.simada_backend.service.psychoForm;
 
 import com.simada_backend.dto.request.psychoForm.PsychoFormSubmitRequest;
+import com.simada_backend.dto.response.PsychoAnswerDTO;
 import com.simada_backend.model.psychoForm.PsychoFormAnswer;
 import com.simada_backend.model.psychoForm.PsychoFormInvite;
 import com.simada_backend.repository.athlete.AthleteRepository;
@@ -17,21 +18,22 @@ import java.util.*;
 @Service
 public class PsychoFormService {
 
-    private final PsychoFormInviteRepository conviteRepo;
-    private final PsychoFormAnswerRepository respostaRepo;
-    private final AthleteRepository atletaRepo;
-    private final MetricsRepository metricasRepo;
+    private final PsychoFormInviteRepository inviteRepo;
+    private final PsychoFormAnswerRepository answerRepo;
+    private final AthleteRepository athleteRepo;
+    private final MetricsRepository metricsRepo;
     private final JavaMailSender mailSender;
 
-    public PsychoFormService(PsychoFormInviteRepository conviteRepo,
-                             PsychoFormAnswerRepository respostaRepo,
-                             AthleteRepository atletaRepo,
-                             MetricsRepository metricasRepo,
-                             JavaMailSender mailSender) {
-        this.conviteRepo = Objects.requireNonNull(conviteRepo);
-        this.respostaRepo = Objects.requireNonNull(respostaRepo);
-        this.atletaRepo = Objects.requireNonNull(atletaRepo);
-        this.metricasRepo = Objects.requireNonNull(metricasRepo);
+    public PsychoFormService(PsychoFormInviteRepository inviteRepo,
+                             PsychoFormAnswerRepository answerRepo,
+                             AthleteRepository athleteRepo,
+                             MetricsRepository metricsRepo,
+                             JavaMailSender mailSender
+    ) {
+        this.inviteRepo = Objects.requireNonNull(inviteRepo);
+        this.answerRepo = Objects.requireNonNull(answerRepo);
+        this.athleteRepo = Objects.requireNonNull(athleteRepo);
+        this.metricsRepo = Objects.requireNonNull(metricsRepo);
         this.mailSender = Objects.requireNonNull(mailSender);
     }
 
@@ -40,28 +42,28 @@ public class PsychoFormService {
             throw new IllegalArgumentException("coachId e sessionId são obrigatórios.");
         }
 
-        List<Long> atletaIds = metricasRepo.findAthletesBySessionId(sessionId);
-        if (atletaIds == null || atletaIds.isEmpty()) {
+        List<Long> athleteIds = metricsRepo.findAthletesBySessionId(sessionId);
+        if (athleteIds == null || athleteIds.isEmpty()) {
             throw new RuntimeException("Any athlete was found, you need to add them in the system.");
         }
 
         List<PsychoFormInvite> convites = new ArrayList<>();
 
-        for (Long atletaId : atletaIds) {
-            String email = atletaRepo.findEmailByCoachId(atletaId)
-                    .orElseThrow(() -> new RuntimeException("E-mail not found for athleteId: " + atletaId));
+        for (Long athleteId : athleteIds) {
+            String email = athleteRepo.findEmailByAthleteId(athleteId)
+                    .orElseThrow(() -> new RuntimeException("E-mail not found for athleteId: " + athleteId));
 
             PsychoFormInvite convite = new PsychoFormInvite();
             convite.setToken(UUID.randomUUID().toString());
             convite.setIdCoach(coachId);
-            convite.setIdAthlete(atletaId);
+            convite.setIdAthlete(athleteId);
             convite.setIdSession(sessionId);
             convite.setEmail(email);
             convite.setStatus("PENDING");
             convite.setCreatedAt(LocalDateTime.now());
             convite.setExpiresAt(LocalDateTime.now().plusDays(2));
 
-            conviteRepo.save(convite);
+            inviteRepo.save(convite);
             convites.add(convite);
 
             String url = (publicBaseUrl != null && !publicBaseUrl.isBlank()
@@ -86,7 +88,7 @@ public class PsychoFormService {
     }
 
     public PsychoFormInvite validateToken(String token) {
-        PsychoFormInvite convite = conviteRepo.findByToken(token)
+        PsychoFormInvite convite = inviteRepo.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Token inválido."));
 
         if (!"PENDING".equalsIgnoreCase(convite.getStatus())) {
@@ -94,14 +96,15 @@ public class PsychoFormService {
         }
         if (convite.getExpiresAt() == null || convite.getExpiresAt().isBefore(LocalDateTime.now())) {
             convite.setStatus("EXPIRED");
-            conviteRepo.save(convite);
+            inviteRepo.save(convite);
             throw new RuntimeException("Token expirado.");
         }
         return convite;
     }
 
     public void submitForm(String token, PsychoFormSubmitRequest req) {
-        PsychoFormInvite convite = conviteRepo.findByToken(token)
+        System.out.println("SRPE: " + req.getSrpe());
+        PsychoFormInvite convite = inviteRepo.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Token inválido."));
 
         if (!"PENDING".equalsIgnoreCase(convite.getStatus())) {
@@ -109,7 +112,7 @@ public class PsychoFormService {
         }
         if (convite.getExpiresAt() == null || convite.getExpiresAt().isBefore(LocalDateTime.now())) {
             convite.setStatus("EXPIRED");
-            conviteRepo.save(convite);
+            inviteRepo.save(convite);
             throw new RuntimeException("Token expirado.");
         }
 
@@ -117,15 +120,41 @@ public class PsychoFormService {
         resp.setToken(token);
         resp.setIdAthlete(convite.getIdAthlete());
         resp.setIdSession(convite.getIdSession());
-        resp.setSRPE(req.getSRPE());
+        resp.setSrpe(req.getSrpe());
         resp.setFatigue(req.getFatigue());
         resp.setSoreness(req.getSoreness());
         resp.setMood(req.getMood());
         resp.setEnergy(req.getEnergy());
         resp.setSubmittedAt(LocalDateTime.now());
-        respostaRepo.save(resp);
+        answerRepo.save(resp);
 
         convite.setStatus("ANSWERED");
-        conviteRepo.save(convite);
+        inviteRepo.save(convite);
     }
+
+    public List<PsychoAnswerDTO> getPsychoAnswersBySession(Long sessionId) {
+        if (sessionId == null) throw new IllegalArgumentException("sessionId cannot be null.");
+
+        List<PsychoFormAnswerRepository.PsychoAnswerRow> rows = answerRepo.findAnswersBySession(sessionId);
+
+        return rows.stream()
+                .map(r -> new PsychoAnswerDTO(
+                        r.getId(),
+                        r.getId_session(),
+                        r.getId_athlete(),
+                        r.getToken(),
+                        r.getSubmitted_at(),
+                        r.getSRPE(),
+                        r.getFatigue(),
+                        r.getSoreness(),
+                        r.getMood(),
+                        r.getEnergy(),
+                        r.getAthlete_name(),
+                        r.getAthlete_email(),
+                        r.getAthlete_photo(),
+                        r.getAthlete_position()
+                ))
+                .toList();
+    }
+
 }

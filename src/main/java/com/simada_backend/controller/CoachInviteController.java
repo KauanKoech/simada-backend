@@ -1,4 +1,4 @@
-package com.simada_backend.controller.athlete;
+package com.simada_backend.controller;
 
 import com.simada_backend.dto.request.athlete.InviteRequest;
 import com.simada_backend.service.athlete.InviteService;
@@ -12,14 +12,15 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
-public class AthleteInviteController {
+@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+public class CoachInviteController {
     private final InviteService inviteService;
     private final PasswordEncoder encoder;
 
     @PostMapping("/coach/{coachId}/athlete-invitations")
     public ResponseEntity<?> createInvite(@PathVariable Long coachId, @RequestBody InviteRequest.CreateInviteReq req) {
         if (req.email == null || req.email.isBlank())
-            return ResponseEntity.badRequest().body("{\"message\":\"Email is required\"}");
+            return ResponseEntity.badRequest().body(java.util.Map.of("message","Email is required"));
         var inv = inviteService.createOrReuse(coachId, req.email);
         return ResponseEntity.status(201).body(new Object() {
             public final Long id = inv.getId();

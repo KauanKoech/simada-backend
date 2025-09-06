@@ -14,6 +14,6 @@ public interface MetricsRepository extends JpaRepository<Metrics, Long> {
     @Query("DELETE FROM Metrics m WHERE m.session.id = :sessionId")
     int deleteBySessionId(@Param("sessionId") Integer sessionId);
 
-    @Query(value = "SELECT DISTINCT m.athlete_id FROM metrics m WHERE m.session_id = :sessionId", nativeQuery = true)
+    @Query(value = "SELECT DISTINCT m.id_athlete FROM metrics m WHERE m.id_session = :sessionId", nativeQuery = true)
     List<Long> findAthletesBySessionId(@Param("sessionId") Long sessionId);
 }

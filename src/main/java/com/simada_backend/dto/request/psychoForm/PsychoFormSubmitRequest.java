@@ -8,7 +8,7 @@ import lombok.Setter;
 @Setter
 @Data
 public class PsychoFormSubmitRequest {
-    private int sRPE;
+    private int srpe;
     private int fatigue;
     private int soreness;
     private int mood;

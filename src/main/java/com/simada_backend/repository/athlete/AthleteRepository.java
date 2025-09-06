@@ -20,14 +20,6 @@ public interface AthleteRepository extends JpaRepository<Athlete, Long> {
    // Combinar nome + dorsal p/ ser mais específico
     Optional<Athlete> findFirstByNameIgnoreCaseAndJerseyNumber(String name, Integer jerseyNumber);
 
-    @Query(
-            value = """
-                SELECT u.email
-                FROM athlete a
-                JOIN user u ON u.id_usuario = a.id_usuario
-                WHERE a.id_atleta = :atletaId
-                """,
-            nativeQuery = true
-    )
-    Optional<String> findEmailByCoachId(@Param("coachId") Long athleteId);
+    @Query("SELECT a.user.email FROM Athlete a WHERE a.id = :athleteId")
+    Optional<String> findEmailByAthleteId(@Param("athleteId") Long athleteId);
 }

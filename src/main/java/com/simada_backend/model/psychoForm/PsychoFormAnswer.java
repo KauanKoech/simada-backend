@@ -26,7 +26,7 @@ public class PsychoFormAnswer {
     private Long idSession;
 
     @Column(name = "srpe", nullable = false)
-    private int sRPE;
+    private int srpe;
 
     @Column(name = "fatigue", nullable = false)
     private int fatigue;

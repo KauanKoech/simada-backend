@@ -3,6 +3,7 @@ package com.simada_backend.controller.psychoForm;
 
 import com.simada_backend.dto.request.psychoForm.PsychoFormCreateRequest;
 import com.simada_backend.dto.request.psychoForm.PsychoFormSubmitRequest;
+import com.simada_backend.dto.response.PsychoAnswerDTO;
 import com.simada_backend.model.psychoForm.PsychoFormInvite;
 import com.simada_backend.service.psychoForm.PsychoFormService;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/psycho-form")
+@CrossOrigin(origins = "http://localhost:3000")
 public class PsychoFormController {
 
     private final PsychoFormService service;
@@ -79,11 +81,16 @@ public class PsychoFormController {
                                     @RequestBody PsychoFormSubmitRequest req) {
         try {
             service.submitForm(token, req);
-            return ResponseEntity.ok(Map.of("message", "Formulário enviado com sucesso."));
+            return ResponseEntity.ok(Map.of("message", "Form sent successfully."));
         } catch (RuntimeException ex) {
             return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
         } catch (Exception ex) {
-            return ResponseEntity.internalServerError().body(Map.of("message", "Falha ao salvar as respostas."));
+            return ResponseEntity.internalServerError().body(Map.of("message", "Failed saving answers."));
         }
+    }
+
+    @GetMapping("/answers/sessions/{sessionId}")
+    public List<PsychoAnswerDTO> getAnswers(@PathVariable Long sessionId){
+        return service.getPsychoAnswersBySession(sessionId);
     }
 }

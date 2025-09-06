@@ -1,5 +1,6 @@
 package com.simada_backend.service.athlete;
 
+import com.simada_backend.model.Coach;
 import com.simada_backend.model.User;
 import com.simada_backend.model.athlete.Athlete;
 import com.simada_backend.model.athlete.invite.AthleteInvite;
@@ -138,14 +139,16 @@ public class InviteService {
         u.setPassword(passwordHash);
         u.setPhone(phone);
         if (birth != null) u.setBirthDate(birth);
-        u.setUserType("atleta");
+        u.setUserType("athlete");
         u = userRepo.save(u);
+
+        Coach coach = coachRepo.getReferenceById(inv.getCoach().getId());
 
         // 2) Atleta (minimize NOT NULLs)
         Athlete a = new Athlete();
         a.setUser(u);
         a.setName(u.getName());
-        a.setCoach(inv.getCoach());
+        a.setCoach(coach);
         if (position != null && !position.isBlank()) {
             a.setPosition(position);
         }

@@ -2,14 +2,14 @@ package com.simada_backend.service;
 
 import com.simada_backend.dto.request.LoginRequest;
 import com.simada_backend.dto.request.athlete.RegisterAthleteRequest;
-import com.simada_backend.dto.request.RegisterTrainerRequest;
-import com.simada_backend.dto.response.UsuarioResponseDTO;
-import com.simada_backend.model.athlete.Atleta;
-import com.simada_backend.model.Treinador;
-import com.simada_backend.model.Usuario;
-import com.simada_backend.repository.athlete.AtletaRepository;
-import com.simada_backend.repository.trainer.TrainerRepository;
-import com.simada_backend.repository.UsuarioRepository;
+import com.simada_backend.dto.request.RegisterCoachRequest;
+import com.simada_backend.dto.response.UserResponseDTO;
+import com.simada_backend.model.User;
+import com.simada_backend.model.athlete.Athlete;
+import com.simada_backend.model.Coach;
+import com.simada_backend.repository.athlete.AthleteRepository;
+import com.simada_backend.repository.coach.CoachRepository;
+import com.simada_backend.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,87 +21,83 @@ import java.util.Objects;
 @Service
 public class AuthService {
 
-    private final UsuarioRepository usuarioRepository;
-    private final TrainerRepository treinadorRepository;
-    private final AtletaRepository atletaRepository;
+    private final UserRepository userRepository;
+    private final CoachRepository coachRepository;
+    private final AthleteRepository athleteRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthService(UsuarioRepository usuarioRepository,
-                       TrainerRepository treinadorRepository,
-                       AtletaRepository atletaRepository,
+    public AuthService(UserRepository userRepository,
+                       CoachRepository coachRepository,
+                       AthleteRepository athleteRepository,
                        PasswordEncoder passwordEncoder) {
-        this.usuarioRepository = Objects.requireNonNull(usuarioRepository);
-        this.treinadorRepository = Objects.requireNonNull(treinadorRepository);
-        this.atletaRepository = Objects.requireNonNull(atletaRepository);
+        this.userRepository = Objects.requireNonNull(userRepository);
+        this.coachRepository = Objects.requireNonNull(coachRepository);
+        this.athleteRepository = Objects.requireNonNull(athleteRepository);
         this.passwordEncoder = Objects.requireNonNull(passwordEncoder);
     }
 
     @Transactional
-    public UsuarioResponseDTO registerTrainer(RegisterTrainerRequest request) {
-        if (usuarioRepository.existsByEmail(request.getEmail())) {
+    public UserResponseDTO registerCoach(RegisterCoachRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email já cadastrado");
         }
 
-        Usuario usuario = new Usuario();
-        usuario.setNome(request.getFullName());
-        usuario.setEmail(request.getEmail());
-        usuario.setSenha(passwordEncoder.encode(request.getPassword()));
-        usuario.setFoto("");
-        usuario.setTipoUsuario("treinador");
-        usuarioRepository.save(usuario);
+        User user = new User();
+        user.setName(request.getFullName());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPhoto("");
+        user.setUserType("treinador");
+        userRepository.save(user);
 
-        Treinador treinador = new Treinador();
-        treinador.setFullName(request.getFullName());
-        treinador.setModality(request.getModality());
-        treinador.setGender(request.getGender());
-        treinador.setUsuario(usuario);
-        treinadorRepository.save(treinador);
+        Coach coach = new Coach();
+        coach.setName(request.getFullName());
+        coach.setUser(user);
+        coachRepository.save(coach);
 
-        return new UsuarioResponseDTO(usuario.getId(), usuario.getEmail(), usuario.getNome(),
-                usuario.getTipoUsuario(), usuario.getFoto());
+        return new UserResponseDTO(user.getId(), user.getEmail(), user.getName(),
+                user.getUserType(), user.getPhoto());
     }
 
     @Transactional
-    public UsuarioResponseDTO registerAthlete(RegisterAthleteRequest request) {
-        if (usuarioRepository.existsByEmail(request.getEmail())) {
+    public UserResponseDTO registerAthlete(RegisterAthleteRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email já cadastrado");
         }
 
-        Usuario usuario = new Usuario();
-        usuario.setNome(request.getFullName());
-        usuario.setEmail(request.getEmail());
-        usuario.setSenha(passwordEncoder.encode(request.getPassword()));
-        usuario.setFoto("");
-        usuario.setTipoUsuario("atleta");
-        usuarioRepository.save(usuario);
+        User user = new User();
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPhoto("");
+        user.setUserType("atleta");
+        userRepository.save(user);
 
-        Treinador treinador = treinadorRepository.findById((long) request.getIdTrainer())
+        Coach coach = coachRepository.findById((long) request.getIdCoach())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Treinador não encontrado"));
 
-        Atleta atleta = new Atleta();
-        atleta.setNome(request.getFullName());
-        atleta.setSexo(request.getGender());
-        atleta.setModalidade(request.getModality());
-        atleta.setNumeroCamisa(request.getShirtNumber());
-        atleta.setPosicao(request.getPosition());
-        atleta.setUsuario(usuario);
-        atleta.setTreinador(treinador);
-        atletaRepository.save(atleta);
+        Athlete athlete = new Athlete();
+        athlete.setName(request.getName());
+        athlete.setJerseyNumber(request.getShirtNumber());
+        athlete.setPosition(request.getPosition());
+        athlete.setUser(user);
+        athlete.setCoach(coach);
+        athleteRepository.save(athlete);
 
-        return new UsuarioResponseDTO(usuario.getId(), usuario.getEmail(), usuario.getNome(),
-                usuario.getTipoUsuario(), usuario.getFoto());
+        return new UserResponseDTO(user.getId(), user.getEmail(), user.getName(),
+                user.getUserType(), user.getPhoto());
     }
 
 
-    public UsuarioResponseDTO login(LoginRequest request) {
-        Usuario usuario = usuarioRepository
+    public UserResponseDTO login(LoginRequest request) {
+        User user = userRepository
                 .findFirstByEmailOrderByIdDesc(request.getEmail())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas"));
 
-        if (!passwordEncoder.matches(request.getPassword(), usuario.getSenha())) {
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas");
         }
-        return new UsuarioResponseDTO(usuario.getId(), usuario.getEmail(), usuario.getNome(),
-                usuario.getTipoUsuario(), usuario.getFoto());
+        return new UserResponseDTO(user.getId(), user.getEmail(), user.getName(),
+                user.getUserType(), user.getPhoto());
     }
 }

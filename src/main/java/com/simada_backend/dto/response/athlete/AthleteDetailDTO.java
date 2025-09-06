@@ -7,7 +7,7 @@ public record AthleteDetailDTO(
     String phone,
     String birth,
     String avatarUrl,
-    String shirt_number,
+    String jersey_number,
     String position,
     AthleteExtraDTO extra
 ) {}

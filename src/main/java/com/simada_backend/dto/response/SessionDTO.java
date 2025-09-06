@@ -6,8 +6,8 @@ import java.time.LocalDate;
 
 public record SessionDTO(
         Long id,
-        @JsonProperty("trainer_id") Long trainerId,
-        @JsonProperty("trainer_photo") String trainerPhoto,
+        @JsonProperty("coach_id") Long coachId,
+        @JsonProperty("coach_photo") String coachPhoto,
         LocalDate date,
         String type,
         String title,

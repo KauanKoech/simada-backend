@@ -5,10 +5,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class RegisterTrainerRequest {
+public class RegisterCoachRequest {
     private String email;
     private String password;
     private String fullName;
-    private String modality;
-    private String gender;
 }

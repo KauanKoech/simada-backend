@@ -2,12 +2,12 @@ package com.simada_backend.service.session;
 
 import com.simada_backend.dto.request.session.UpdateSessionRequest;
 import com.simada_backend.dto.response.SessionDTO;
-import com.simada_backend.model.athlete.Atleta;
-import com.simada_backend.model.session.Metricas;
-import com.simada_backend.model.session.Sessao;
-import com.simada_backend.repository.athlete.AtletaRepository;
-import com.simada_backend.repository.session.MetricasRepository;
-import com.simada_backend.repository.session.TrainerSessionsRepository;
+import com.simada_backend.model.athlete.Athlete;
+import com.simada_backend.model.session.Metrics;
+import com.simada_backend.model.session.Session;
+import com.simada_backend.repository.athlete.AthleteRepository;
+import com.simada_backend.repository.session.MetricsRepository;
+import com.simada_backend.repository.session.CoachSessionsRepository;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -29,13 +29,13 @@ import java.util.*;
 @Service
 public class SessionMetricsService {
 
-    private final TrainerSessionsRepository sessionsRepo;
-    private final MetricasRepository metricasRepo;
-    private final AtletaRepository atletaRepo;
+    private final CoachSessionsRepository sessionsRepo;
+    private final MetricsRepository metricasRepo;
+    private final AthleteRepository atletaRepo;
 
-    public SessionMetricsService(TrainerSessionsRepository sessionsRepo,
-                                 MetricasRepository metricasRepo,
-                                 AtletaRepository atletaRepo) {
+    public SessionMetricsService(CoachSessionsRepository sessionsRepo,
+                                 MetricsRepository metricasRepo,
+                                 AthleteRepository atletaRepo) {
         this.sessionsRepo = sessionsRepo;
         this.metricasRepo = metricasRepo;
         this.atletaRepo = atletaRepo;
@@ -44,10 +44,10 @@ public class SessionMetricsService {
     @Transactional
     public void importMetricsFromCsv(int sessionId, MultipartFile file) {
         // 1) Carrega a sessão
-        Sessao sessao = sessionsRepo.findById(sessionId)
+        Session session = sessionsRepo.findById(sessionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sessão não encontrada"));
 
-        Long trainerId = sessao.getTreinador().getId(); // usado para validar atleta pertence ao treinador
+        Long coachId = session.getCoach().getId();
 
         // 2) Lê todo o arquivo em memória (simples e prático; p/ arquivos muito grandes, stream por linhas)
         final String content;
@@ -113,7 +113,7 @@ public class SessionMetricsService {
             if (COL_PLAYER == null)
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Coluna 'player' (nome do atleta) não encontrada");
 
-            List<Metricas> batch = new ArrayList<>();
+            List<Metrics> batch = new ArrayList<>();
             Set<Long> distinctAthleteIds = new HashSet<>();
             int row = 1;
 
@@ -128,8 +128,8 @@ public class SessionMetricsService {
                 }
 
                 //Resolve atleta (repo -> por nome+dorsal, nome, dorsal)
-                Atleta atleta = resolveAtletaRepo(playerName, dorsal);
-                if (atleta == null) {
+                Athlete athlete = resolveAtletaRepo(playerName, dorsal);
+                if (athlete == null) {
                     throw new ResponseStatusException(
                             HttpStatus.BAD_REQUEST,
                             "Linha " + row + ": atleta '" + playerName +
@@ -138,16 +138,16 @@ public class SessionMetricsService {
                 }
 
                 // Garante que o atleta pertence ao mesmo treinador da sessão
-                if (atleta.getTreinador() == null || !Objects.equals(atleta.getTreinador().getId(), trainerId)) {
+                if (athlete.getCoach() == null || !Objects.equals(athlete.getCoach().getId(), coachId)) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                             "Linha " + row + ": atleta '" + playerName +
-                                    "' não pertence ao treinador da sessão (id=" + trainerId + ")");
+                                    "' não pertence ao treinador da sessão (id=" + coachId + ")");
                 }
 
                 // 6) Monta a entidade Métricas
-                Metricas m = new Metricas();
-                m.setSessao(sessao);
-                m.setAtleta(atleta);
+                Metrics m = new Metrics();
+                m.setSession(session);
+                m.setAthlete(athlete);
 
                 m.setTime(tryParseBigDecimalPt(get(rec, COL_TIME)));
                 m.setTotalDistance(tryParseBigDecimalPt(get(rec, COL_TDIST)));
@@ -178,15 +178,15 @@ public class SessionMetricsService {
                 m.setRpe(tryParseBigDecimalPt(get(rec, COL_RPE)));
 
                 batch.add(m);
-                distinctAthleteIds.add(atleta.getIdAtleta());
+                distinctAthleteIds.add(athlete.getId());
             }
 
             // Persiste tudo
             metricasRepo.saveAll(batch);
 
             //Atualiza num_atletas na sessão
-            sessao.setNumAtletas(distinctAthleteIds.size());
-            sessionsRepo.save(sessao);
+            session.setNumAthletes(distinctAthleteIds.size());
+            sessionsRepo.save(session);
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Erro ao processar CSV", e);
         }
@@ -197,19 +197,19 @@ public class SessionMetricsService {
         if (description == null) {
             description = "";
         }
-        Sessao s = sessionsRepo.findById(sessionId)
+        Session s = sessionsRepo.findById(sessionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sessão não encontrada"));
-        s.setDescricao(description);
+        s.setDescription(description);
     }
 
     @Transactional
     public SessionDTO updateSession(int id, UpdateSessionRequest req) {
-        Sessao s = sessionsRepo.findById(id)
+        Session s = sessionsRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sessão não encontrada"));
 
         // type: "Training" | "Game"  -> BD: "treino" | "jogo"
         if (req.type() != null && !req.type().isBlank()) {
-            s.setTipoSessao(mapTypeDbToApp(req.type()));
+            s.setSession_type(mapTypeDbToApp(req.type()));
         }
 
         // title
@@ -218,38 +218,38 @@ public class SessionMetricsService {
             if (t.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "title não pode ser vazio");
             }
-            s.setTitulo(t);
+            s.setTitle(t);
         }
 
         // date: aceita "YYYY-MM-DD" ou ISO datetime
         if (req.date() != null && !req.date().isBlank()) {
-            s.setData(parseDate(req.date()));
+            s.setDate(parseDate(req.date()));
         }
 
         // score/description/location (aceita null para apagar)
         if (req.score() != null) {
-            s.setPlacar(req.score().isBlank() ? null : req.score());
+            s.setScore(req.score().isBlank() ? null : req.score());
         }
         if (req.description() != null) {
-            s.setDescricao(req.description());
+            s.setDescription(req.description());
         }
         if (req.location() != null) {
             s.setLocal(req.location());
         }
 
-        Sessao saved = sessionsRepo.save(s);
+        Session saved = sessionsRepo.save(s);
 
         // monta resposta no formato do app (type em "Training"/"Game")
         return new SessionDTO(
-                saved.getIdSessao().longValue(),
-                saved.getTreinador() != null ? saved.getTreinador().getId() : null,
-                saved.getFotoTreinador(),
-                saved.getData(),
-                mapTypeDbToApp(saved.getTipoSessao()),
-                saved.getTitulo(),
-                saved.getNumAtletas(),
-                saved.getPlacar(),
-                saved.getDescricao(),
+                saved.getId().longValue(),
+                saved.getCoach() != null ? saved.getCoach().getId() : null,
+                saved.getCoach_Photo(),
+                saved.getDate(),
+                mapTypeDbToApp(saved.getSession_type()),
+                saved.getTitle(),
+                saved.getNumAthletes(),
+                saved.getScore(),
+                saved.getDescription(),
                 saved.getLocal()
         );
     }
@@ -319,16 +319,16 @@ public class SessionMetricsService {
         }
     }
 
-    private Atleta resolveAtletaRepo(String playerName, Integer dorsal) {
-        Atleta a = null;
+    private Athlete resolveAtletaRepo(String playerName, Integer dorsal) {
+        Athlete a = null;
         if (playerName != null && dorsal != null) {
-            a = atletaRepo.findFirstByNomeIgnoreCaseAndNumeroCamisa(playerName, dorsal).orElse(null);
+            a = atletaRepo.findFirstByNameIgnoreCaseAndJerseyNumber(playerName, dorsal).orElse(null);
         }
         if (a == null && playerName != null) {
-            a = atletaRepo.findFirstByNomeIgnoreCase(playerName).orElse(null);
+            a = atletaRepo.findFirstByNameIgnoreCase(playerName).orElse(null);
         }
         if (a == null && dorsal != null) {
-            List<Atleta> byNumber = atletaRepo.findByNumeroCamisa(dorsal);
+            List<Athlete> byNumber = atletaRepo.findByJerseyNumber(dorsal);
             if (byNumber.size() == 1) a = byNumber.get(0);
         }
         if (a == null) {

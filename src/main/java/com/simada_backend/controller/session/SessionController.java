@@ -1,7 +1,7 @@
 package com.simada_backend.controller.session;
 
 import com.simada_backend.dto.request.session.RegisterSessionRequest;
-import com.simada_backend.dto.response.TrainerSessionDTO;
+import com.simada_backend.dto.response.CoachSessionDTO;
 import com.simada_backend.service.session.SessionService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -23,25 +23,25 @@ public class SessionController {
     }
 
     @GetMapping("/get")
-    public List<TrainerSessionDTO> sessions(
-            @RequestParam int trainerId,
+    public List<CoachSessionDTO> sessions(
+            @RequestParam int coachId,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate from,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate to,
             @RequestParam(defaultValue = "50") int limit
     ) {
-        return sessionService.getSessionsTrainer(trainerId, from, to, limit);
+        return sessionService.getSessionsCoach(coachId, from, to, limit);
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Void> registerTrainer(@Valid @RequestBody RegisterSessionRequest request) {
+    public ResponseEntity<Void> registerCoach(@Valid @RequestBody RegisterSessionRequest request) {
         sessionService.registerSession(request);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable int id) {
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
         sessionService.deleteSession(id);
         return ResponseEntity.noContent().build(); // 204
     }

@@ -11,17 +11,17 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "atleta_extra")
-public class AtletaExtra {
+@Table(name = "athlete_extra")
+public class AthleteExtra {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_extra")
+    @Column(name = "id")
     private Long id;
 
     @OneToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_atleta", unique = true, nullable = false)
-    private Atleta atleta;
+    @JoinColumn(name = "id_athlete", unique = true, nullable = false)
+    private Athlete athlete;
 
     @Column(name = "height_cm", precision = 5, scale = 2)
     private BigDecimal heightCm;

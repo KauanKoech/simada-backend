@@ -7,18 +7,18 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "treinador")
-public class Treinador {
+@Table(name = "coach")
+public class Coach {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
-    private String fullName;
-    private String modality;
-    private String gender;
+    @Column(name = "name")
+    private String name;
 
     @OneToOne
-    @JoinColumn(name = "id_usuario")
-    private Usuario usuario;
+    @JoinColumn(name = "id_user")
+    private User user;
 }

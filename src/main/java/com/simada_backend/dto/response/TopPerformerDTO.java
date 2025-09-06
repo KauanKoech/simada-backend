@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 
 public record TopPerformerDTO(
-    @JsonProperty("nome_atleta") String nomeAtleta,
-    @JsonProperty("foto") String foto,
-    @JsonProperty("data_atualizacao") LocalDateTime dataAtualizacao,
-    @JsonProperty("pontuacao") Double pontuacao,
-    @JsonProperty("ultima_pontuacao") Double ultimaPontuacao
+    @JsonProperty("athlete_name") String athleteName,
+    @JsonProperty("photo") String foto,
+    @JsonProperty("update_date") LocalDateTime updateDate,
+    @JsonProperty("score") Double Score,
+    @JsonProperty("last_score") Double lastScore
 ){}

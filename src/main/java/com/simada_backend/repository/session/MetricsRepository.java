@@ -1,0 +1,19 @@
+package com.simada_backend.repository.session;
+
+import com.simada_backend.model.session.Metrics;
+import jakarta.transaction.Transactional;
+import org.springframework.data.jpa.repository.*;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
+
+public interface MetricsRepository extends JpaRepository<Metrics, Long> {
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query("DELETE FROM Metrics m WHERE m.session.id = :sessionId")
+    int deleteBySessionId(@Param("sessionId") Integer sessionId);
+
+    @Query(value = "SELECT DISTINCT m.athlete_id FROM metrics m WHERE m.session_id = :sessionId", nativeQuery = true)
+    List<Long> findAthletesBySessionId(@Param("sessionId") Long sessionId);
+}

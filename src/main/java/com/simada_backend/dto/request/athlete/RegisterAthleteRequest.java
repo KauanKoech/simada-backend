@@ -6,12 +6,10 @@ import lombok.Setter;
 @Getter
 @Setter
 public class RegisterAthleteRequest {
-    private int idTrainer;
+    private int idCoach;
     private String email;
     private String password;
-    private String fullName;
-    private String gender;
-    private String modality;
+    private String name;
     private int shirtNumber;
     private String position;
 }

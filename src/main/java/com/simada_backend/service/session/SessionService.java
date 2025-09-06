@@ -1,12 +1,12 @@
 package com.simada_backend.service.session;
 
 import com.simada_backend.dto.request.session.RegisterSessionRequest;
-import com.simada_backend.dto.response.TrainerSessionDTO;
-import com.simada_backend.model.session.Sessao;
-import com.simada_backend.model.Treinador;
-import com.simada_backend.repository.session.MetricasRepository;
-import com.simada_backend.repository.session.TrainerSessionsRepository;
-import com.simada_backend.repository.trainer.TrainerRepository;
+import com.simada_backend.dto.response.CoachSessionDTO;
+import com.simada_backend.model.session.Session;
+import com.simada_backend.model.Coach;
+import com.simada_backend.repository.session.MetricsRepository;
+import com.simada_backend.repository.session.CoachSessionsRepository;
+import com.simada_backend.repository.coach.CoachRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,36 +19,36 @@ import java.util.Objects;
 @Service
 public class SessionService {
 
-    private final TrainerSessionsRepository sessionsRepo;
-    private final TrainerRepository trainerRepo;
-    private final MetricasRepository metricasRepo;
+    private final CoachSessionsRepository sessionsRepo;
+    private final CoachRepository coachRepo;
+    private final MetricsRepository metricasRepo;
 
-    public SessionService(TrainerSessionsRepository sessionsRepo, TrainerRepository trainerRepo, MetricasRepository metricasRepo) {
+    public SessionService(CoachSessionsRepository sessionsRepo, CoachRepository coachRepo, MetricsRepository metricasRepo) {
         this.sessionsRepo = Objects.requireNonNull(sessionsRepo);
-        this.trainerRepo = Objects.requireNonNull(trainerRepo);
+        this.coachRepo = Objects.requireNonNull(coachRepo);
         this.metricasRepo = Objects.requireNonNull(metricasRepo);
     }
 
-    public List<TrainerSessionDTO> getSessionsTrainer(
-            int trainerId,
+    public List<CoachSessionDTO> getSessionsCoach(
+            int coachId,
             LocalDate from,
             LocalDate to,
             int limit
     ) {
         int safeLimit = Math.max(1, Math.min(limit, 200));
-        return sessionsRepo.findSessions(trainerId, from, to, safeLimit)
+        return sessionsRepo.findSessions(coachId, from, to, safeLimit)
                 .stream()
-                .map(r -> new TrainerSessionDTO(
+                .map(r -> new CoachSessionDTO(
                         r.getId(),
-                        r.getTrainer_id(),
-                        r.getTrainer_photo(),
+                        r.getCoach_id(),
+                        r.getCoach_photo(),
                         r.getDate(),
                         r.getType(),
                         r.getTitle(),
                         r.getAthletes_count(),
                         r.getScore(),
                         r.getDescription(),
-                        r.getLocation(),
+                        r.getLocal(),
                         r.getHas_metrics() != null && r.getHas_metrics() > 0,
                         r.getHas_psycho() != null && r.getHas_psycho() > 0
                 ))
@@ -59,7 +59,7 @@ public class SessionService {
 
     @Transactional
     public void registerSession(RegisterSessionRequest req) {
-        Treinador treinador = trainerRepo.findById(req.getTrainerId())
+        Coach coach = coachRepo.findById(req.getCoachId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Treinador não encontrado"));
 
         LocalDate date;
@@ -69,25 +69,25 @@ public class SessionService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato inválido para 'date' (use YYYY-MM-DD)");
         }
 
-        String trainerPhoto = (treinador.getUsuario() != null) ? treinador.getUsuario().getFoto() : null;
+        String coachPhoto = (coach.getUser() != null) ? coach.getUser().getPhoto() : null;
 
-        Sessao s = new Sessao();
-        s.setTreinador(treinador);
-        s.setFotoTreinador(trainerPhoto);
-        s.setData(date);
-        s.setTipoSessao(req.getType());
-        s.setTitulo(req.getTitle());
-        s.setDescricao(req.getNotes());
+        Session s = new Session();
+        s.setCoach(coach);
+        s.setCoach_Photo(coachPhoto);
+        s.setDate(date);
+        s.setSession_type(req.getType());
+        s.setTitle(req.getTitle());
+        s.setDescription(req.getNotes());
         s.setLocal(req.getLocation());
-        s.setPlacar(req.getScore());
-        s.setNumAtletas(req.getAthletesCount());
+        s.setScore(req.getScore());
+        s.setNumAthletes(req.getAthletesCount());
 
         sessionsRepo.save(s);
     }
 
     @Transactional
-    public void deleteSession(int sessionId) {
-        Sessao s = sessionsRepo.findById(sessionId)
+    public void deleteSession(Integer sessionId) {
+        Session s = sessionsRepo.findById(sessionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sessão não encontrada"));
 
         metricasRepo.deleteBySessionId(sessionId);

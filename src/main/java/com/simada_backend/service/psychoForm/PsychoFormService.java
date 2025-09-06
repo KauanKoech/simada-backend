@@ -1,12 +1,12 @@
 package com.simada_backend.service.psychoForm;
 
 import com.simada_backend.dto.request.psychoForm.PsychoFormSubmitRequest;
-import com.simada_backend.model.psychoForm.PsychoFormResposta;
-import com.simada_backend.model.psychoForm.PsychoFormConvite;
-import com.simada_backend.repository.athlete.AtletaRepository;
-import com.simada_backend.repository.psychoForm.PsychoFormConviteRepository;
-import com.simada_backend.repository.psychoForm.PsychoFormRespostaRepository;
-import com.simada_backend.repository.session.MetricasRepository;
+import com.simada_backend.model.psychoForm.PsychoFormAnswer;
+import com.simada_backend.model.psychoForm.PsychoFormInvite;
+import com.simada_backend.repository.athlete.AthleteRepository;
+import com.simada_backend.repository.psychoForm.PsychoFormInviteRepository;
+import com.simada_backend.repository.psychoForm.PsychoFormAnswerRepository;
+import com.simada_backend.repository.session.MetricsRepository;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -17,16 +17,16 @@ import java.util.*;
 @Service
 public class PsychoFormService {
 
-    private final PsychoFormConviteRepository conviteRepo;
-    private final PsychoFormRespostaRepository respostaRepo;
-    private final AtletaRepository atletaRepo;
-    private final MetricasRepository metricasRepo;
+    private final PsychoFormInviteRepository conviteRepo;
+    private final PsychoFormAnswerRepository respostaRepo;
+    private final AthleteRepository atletaRepo;
+    private final MetricsRepository metricasRepo;
     private final JavaMailSender mailSender;
 
-    public PsychoFormService(PsychoFormConviteRepository conviteRepo,
-                             PsychoFormRespostaRepository respostaRepo,
-                             AtletaRepository atletaRepo,
-                             MetricasRepository metricasRepo,
+    public PsychoFormService(PsychoFormInviteRepository conviteRepo,
+                             PsychoFormAnswerRepository respostaRepo,
+                             AthleteRepository atletaRepo,
+                             MetricsRepository metricasRepo,
                              JavaMailSender mailSender) {
         this.conviteRepo = Objects.requireNonNull(conviteRepo);
         this.respostaRepo = Objects.requireNonNull(respostaRepo);
@@ -35,9 +35,9 @@ public class PsychoFormService {
         this.mailSender = Objects.requireNonNull(mailSender);
     }
 
-    public List<PsychoFormConvite> createConvites(Long trainerId, Long sessionId, String publicBaseUrl) {
-        if (trainerId == null || sessionId == null) {
-            throw new IllegalArgumentException("trainerId e sessionId são obrigatórios.");
+    public List<PsychoFormInvite> createConvites(Long coachId, Long sessionId, String publicBaseUrl) {
+        if (coachId == null || sessionId == null) {
+            throw new IllegalArgumentException("coachId e sessionId são obrigatórios.");
         }
 
         List<Long> atletaIds = metricasRepo.findAthletesBySessionId(sessionId);
@@ -45,17 +45,17 @@ public class PsychoFormService {
             throw new RuntimeException("Any athlete was found, you need to add them in the system.");
         }
 
-        List<PsychoFormConvite> convites = new ArrayList<>();
+        List<PsychoFormInvite> convites = new ArrayList<>();
 
         for (Long atletaId : atletaIds) {
-            String email = atletaRepo.findEmailByAtletaId(atletaId)
+            String email = atletaRepo.findEmailByCoachId(atletaId)
                     .orElseThrow(() -> new RuntimeException("E-mail not found for athleteId: " + atletaId));
 
-            PsychoFormConvite convite = new PsychoFormConvite();
+            PsychoFormInvite convite = new PsychoFormInvite();
             convite.setToken(UUID.randomUUID().toString());
-            convite.setIdTreinador(trainerId);
-            convite.setIdAtleta(atletaId);
-            convite.setIdSessao(sessionId);
+            convite.setIdCoach(coachId);
+            convite.setIdAthlete(atletaId);
+            convite.setIdSession(sessionId);
             convite.setEmail(email);
             convite.setStatus("PENDING");
             convite.setCreatedAt(LocalDateTime.now());
@@ -85,8 +85,8 @@ public class PsychoFormService {
         return convites;
     }
 
-    public PsychoFormConvite validateToken(String token) {
-        PsychoFormConvite convite = conviteRepo.findByToken(token)
+    public PsychoFormInvite validateToken(String token) {
+        PsychoFormInvite convite = conviteRepo.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Token inválido."));
 
         if (!"PENDING".equalsIgnoreCase(convite.getStatus())) {
@@ -101,7 +101,7 @@ public class PsychoFormService {
     }
 
     public void submitForm(String token, PsychoFormSubmitRequest req) {
-        PsychoFormConvite convite = conviteRepo.findByToken(token)
+        PsychoFormInvite convite = conviteRepo.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Token inválido."));
 
         if (!"PENDING".equalsIgnoreCase(convite.getStatus())) {
@@ -113,10 +113,10 @@ public class PsychoFormService {
             throw new RuntimeException("Token expirado.");
         }
 
-        PsychoFormResposta resp = new PsychoFormResposta();
+        PsychoFormAnswer resp = new PsychoFormAnswer();
         resp.setToken(token);
-        resp.setIdAtleta(convite.getIdAtleta());
-        resp.setIdSessao(convite.getIdSessao());
+        resp.setIdAthlete(convite.getIdAthlete());
+        resp.setIdSession(convite.getIdSession());
         resp.setSRPE(req.getSRPE());
         resp.setFatigue(req.getFatigue());
         resp.setSoreness(req.getSoreness());

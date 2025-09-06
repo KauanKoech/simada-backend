@@ -16,11 +16,11 @@ public class AthleteInviteController {
     private final InviteService inviteService;
     private final PasswordEncoder encoder;
 
-    @PostMapping("/trainers/{trainerId}/athlete-invitations")
-    public ResponseEntity<?> createInvite(@PathVariable Long trainerId, @RequestBody InviteRequest.CreateInviteReq req) {
+    @PostMapping("/coach/{coachId}/athlete-invitations")
+    public ResponseEntity<?> createInvite(@PathVariable Long coachId, @RequestBody InviteRequest.CreateInviteReq req) {
         if (req.email == null || req.email.isBlank())
             return ResponseEntity.badRequest().body("{\"message\":\"Email is required\"}");
-        var inv = inviteService.createOrReuse(trainerId, req.email);
+        var inv = inviteService.createOrReuse(coachId, req.email);
         return ResponseEntity.status(201).body(new Object() {
             public final Long id = inv.getId();
             public final String email = inv.getEmail();
@@ -35,7 +35,7 @@ public class AthleteInviteController {
             var info = inviteService.validateToken(token);
             return ResponseEntity.ok(new Object() {
                 public final String email = info.email();
-                public final String trainerName = info.trainerName();
+                public final String coachName = info.coachName();
             });
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(404).body(new Object() {

@@ -2,10 +2,10 @@ package com.simada_backend.dto.response;
 
 import java.time.LocalDate;
 
-public record TrainerSessionDTO(
+public record CoachSessionDTO(
         Long id,
-        Long trainerId,
-        String trainerPhoto,
+        Long coachId,
+        String coachPhoto,
         LocalDate date,
         String type,
         String title,
@@ -14,5 +14,5 @@ public record TrainerSessionDTO(
         String description,
         String location,
         Boolean has_metrics,
-        Boolean has_psico
+        Boolean has_psycho
 ) {}

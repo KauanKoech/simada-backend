@@ -9,8 +9,8 @@ import lombok.Setter;
 public class RegisterSessionRequest {
 
         @NotNull
-        @JsonAlias({"trainer_id", "trainerId"})
-        private Long trainerId;
+        @JsonAlias({"coach_id", "coachId"})
+        private Long coachId;
 
         @NotBlank
         private String type;

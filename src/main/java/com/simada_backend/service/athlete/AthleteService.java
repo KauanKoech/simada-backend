@@ -3,13 +3,13 @@ package com.simada_backend.service.athlete;
 import com.simada_backend.dto.request.athlete.UpdateAthleteRequest;
 import com.simada_backend.dto.response.athlete.AthleteDetailDTO;
 import com.simada_backend.dto.response.athlete.AthleteExtraDTO;
-import com.simada_backend.model.athlete.Atleta;
-import com.simada_backend.model.athlete.AtletaExtra;
-import com.simada_backend.model.Usuario;
-import com.simada_backend.repository.UsuarioRepository;
-import com.simada_backend.repository.athlete.AtletaExtraRepository;
-import com.simada_backend.repository.athlete.AtletaRepository;
-import com.simada_backend.repository.athlete.ConviteAtletaRepository;
+import com.simada_backend.model.User;
+import com.simada_backend.model.athlete.Athlete;
+import com.simada_backend.model.athlete.AthleteExtra;
+import com.simada_backend.repository.UserRepository;
+import com.simada_backend.repository.athlete.AthleteExtraRepository;
+import com.simada_backend.repository.athlete.AthleteRepository;
+import com.simada_backend.repository.athlete.AthleteInviteRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,28 +22,28 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class AthleteService {
 
-    private final AtletaRepository atletaRepo;
-    private final AtletaExtraRepository extraRepo;
-    private final UsuarioRepository usuarioRepo;
-    private final ConviteAtletaRepository convRepo;
+    private final AthleteRepository atletaRepo;
+    private final AthleteExtraRepository extraRepo;
+    private final UserRepository usuarioRepo;
+    private final AthleteInviteRepository convRepo;
 
     @Transactional
-    public AthleteDetailDTO getAthlete(Long trainerId, Long athleteId) {
-        Atleta atleta = atletaRepo.findByIdAtletaAndTreinador_Id(athleteId, trainerId)
+    public AthleteDetailDTO getAthlete(Long coachId, Long athleteId) {
+        Athlete athlete = atletaRepo.findByIdAndCoach_Id(athleteId, coachId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Atleta não encontrado para este treinador"));
 
-        Usuario u = atleta.getUsuario();
-        AtletaExtra ex = atleta.getExtra();
+        User u = athlete.getUser();
+        AthleteExtra ex = athlete.getExtra();
 
         return new AthleteDetailDTO(
-                atleta.getIdAtleta(),
-                atleta.getNome(),
+                athlete.getId(),
+                athlete.getName(),
                 u != null ? u.getEmail() : null,
-                u != null ? u.getTelefone() : null,
-                u != null && u.getDataNascimento() != null ? u.getDataNascimento().toString() : null,
-                u != null ? u.getFoto() : null,
-                atleta.getNumeroCamisa() != null ? String.valueOf(atleta.getNumeroCamisa()) : null,
-                atleta.getPosicao(),
+                u != null ? u.getPhone() : null,
+                u != null && u.getBirthDate() != null ? u.getBirthDate().toString() : null,
+                u != null ? u.getPassword() : null,
+                athlete.getJerseyNumber() != null ? String.valueOf(athlete.getJerseyNumber()) : null,
+                athlete.getPosition(),
                 ex == null ? null : new AthleteExtraDTO(
                         ex.getHeightCm(), ex.getWeightKg(), ex.getLeanMassKg(), ex.getFatMassKg(),
                         ex.getBodyFatPct(), ex.getDominantFoot(), ex.getNationality(), ex.getInjuryStatus()
@@ -52,20 +52,20 @@ public class AthleteService {
     }
 
     @Transactional
-    public AthleteDetailDTO updateAthlete(Long trainerId, Long athleteId, UpdateAthleteRequest req) {
-        Atleta atleta = atletaRepo.findByIdAtletaAndTreinador_Id(athleteId, trainerId)
+    public AthleteDetailDTO updateAthlete(Long coachId, Long athleteId, UpdateAthleteRequest req) {
+        Athlete athlete = atletaRepo.findByIdAndCoach_Id(athleteId, coachId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Atleta não encontrado para este treinador"));
 
-        if (req.getName() != null) atleta.setNome(req.getName());
-        if (req.getPosition() != null) atleta.setPosicao(req.getPosition());
+        if (req.getName() != null) athlete.setName(req.getName());
+        if (req.getPosition() != null) athlete.setPosition(req.getPosition());
 
-        Usuario u = atleta.getUsuario();
+        User u = athlete.getUser();
         if (u != null) {
             if (req.getEmail() != null) u.setEmail(req.getEmail());
-            if (req.getPhone() != null) u.setTelefone(req.getPhone());
+            if (req.getPhone() != null) u.setPhone(req.getPhone());
             if (req.getBirth() != null && !req.getBirth().isBlank()) {
                 try {
-                    u.setDataNascimento(LocalDate.parse(req.getBirth()));
+                    u.setBirthDate(LocalDate.parse(req.getBirth()));
                 } catch (Exception e) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de birth inválido (use YYYY-MM-DD)");
                 }
@@ -75,9 +75,9 @@ public class AthleteService {
 
         // Extra
         if (req.getExtra() != null) {
-            AtletaExtra ex = extraRepo.findByAtleta_IdAtleta(athleteId).orElseGet(() -> {
-                AtletaExtra novo = new AtletaExtra();
-                novo.setAtleta(atleta);
+            AthleteExtra ex = extraRepo.findByAthlete_Id(athleteId).orElseGet(() -> {
+                AthleteExtra novo = new AthleteExtra();
+                novo.setAthlete(athlete);
                 return novo;
             });
 
@@ -92,22 +92,22 @@ public class AthleteService {
             ex.setInjuryStatus(e.injury_status());
 
             extraRepo.save(ex);
-            atleta.setExtra(ex);
+            athlete.setExtra(ex);
         }
 
-        atletaRepo.save(atleta);
-        return getAthlete(trainerId, athleteId);
+        atletaRepo.save(athlete);
+        return getAthlete(coachId, athleteId);
     }
 
     @Transactional
     public void deleteAthlete(Long athleteId) {
-        Atleta a = atletaRepo.findById(athleteId)
+        Athlete a = atletaRepo.findById(athleteId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Atleta não encontrada"));
 
         atletaRepo.deleteById(athleteId);
         extraRepo.deleteById(athleteId);
-        convRepo.deleteByEmail(a.getUsuario().getEmail());
-        usuarioRepo.delete(a.getUsuario());
+        convRepo.deleteByEmail(a.getUser().getEmail());
+        usuarioRepo.delete(a.getUser());
     }
 
 }

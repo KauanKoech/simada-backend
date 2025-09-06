@@ -8,28 +8,28 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/trainer")
+@RequestMapping("/api/coach")
 @CrossOrigin(origins = "http://localhost:3000")
 @RequiredArgsConstructor
 public class AthleteController {
 
     private final AthleteService athleteService;
 
-    @GetMapping("/{trainerId}/athletes/{athleteId}")
+    @GetMapping("/{coachId}/athletes/{athleteId}")
     public AthleteDetailDTO getOne(
-            @PathVariable Long trainerId,
+            @PathVariable Long coachId,
             @PathVariable Long athleteId
     ) {
-        return athleteService.getAthlete(trainerId, athleteId);
+        return athleteService.getAthlete(coachId, athleteId);
     }
 
-    @PutMapping("/{trainerId}/update/athlete/{athleteId}")
+    @PutMapping("/{coachId}/update/athlete/{athleteId}")
     public AthleteDetailDTO updateOne(
-            @PathVariable Long trainerId,
+            @PathVariable Long coachId,
             @PathVariable Long athleteId,
             @RequestBody UpdateAthleteRequest body
     ) {
-        return athleteService.updateAthlete(trainerId, athleteId, body);
+        return athleteService.updateAthlete(coachId, athleteId, body);
     }
 
     @DeleteMapping("/athlete/{id}")

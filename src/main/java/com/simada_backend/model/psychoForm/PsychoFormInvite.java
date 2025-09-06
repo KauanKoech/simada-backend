@@ -9,8 +9,8 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Entity
-@Table(name = "psico_form_convite")
-public class PsychoFormConvite {
+@Table(name = "psycho_form_invite")
+public class PsychoFormInvite {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,14 +19,14 @@ public class PsychoFormConvite {
     @Column(nullable = false, unique = true)
     private String token;
 
-    @Column(name = "id_treinador", nullable = false)
-    private Long idTreinador;
+    @Column(name = "id_coach", nullable = false)
+    private Long idCoach;
 
-    @Column(name = "id_atleta", nullable = false)
-    private Long idAtleta;
+    @Column(name = "id_athlete", nullable = false)
+    private Long idAthlete;
 
-    @Column(name = "id_sessao", nullable = false)
-    private Long idSessao;
+    @Column(name = "id_session", nullable = false)
+    private Long idSession;
 
     @Column(nullable = false)
     private String email;

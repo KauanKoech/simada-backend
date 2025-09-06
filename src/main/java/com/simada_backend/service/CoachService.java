@@ -4,9 +4,8 @@ import com.simada_backend.dto.response.AlertDTO;
 import com.simada_backend.dto.response.athlete.AthleteDTO;
 import com.simada_backend.dto.response.TopPerformerDTO;
 import com.simada_backend.dto.response.athlete.AthleteExtraDTO;
-import com.simada_backend.repository.athlete.AtletaExtraRepository;
-import com.simada_backend.repository.session.TrainerSessionsRepository;
-import com.simada_backend.repository.trainer.*;
+import com.simada_backend.repository.athlete.AthleteExtraRepository;
+import com.simada_backend.repository.coach.*;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -15,25 +14,18 @@ import java.util.Map;
 import java.util.Objects;
 
 @Service
-public class TrainerService {
-    private final RankingRepository repo;
-    private final TrainerStatsRepository statsRepo;
-    private final TrainerAlertsRepository alertsRepo;
-    private final TrainerAthletesRepository trainerAthletesRepo;
-    private final AtletaExtraRepository athleteExtraRepo;
+public class CoachService {
+    private final CoachStatsRepository statsRepo;
+    private final CoachAthletesRepository coachAthletesRepo;
+    private final AthleteExtraRepository athleteExtraRepo;
 
-    public TrainerService(
-            RankingRepository repo,
-            TrainerStatsRepository trainerStatsRepository,
-            TrainerAlertsRepository alertsRepository,
-            TrainerSessionsRepository sessionsRepo,
-            TrainerAthletesRepository trainerAthletesRepo,
-            AtletaExtraRepository athleteExtraRepository
+    public CoachService(
+            CoachStatsRepository coachStatsRepository,
+            CoachAthletesRepository coachAthletesRepo,
+            AthleteExtraRepository athleteExtraRepository
     ) {
-        this.repo = Objects.requireNonNull(repo);
-        this.statsRepo = Objects.requireNonNull(trainerStatsRepository);
-        this.alertsRepo = Objects.requireNonNull(alertsRepository);
-        this.trainerAthletesRepo = Objects.requireNonNull(trainerAthletesRepo);
+        this.statsRepo = Objects.requireNonNull(coachStatsRepository);
+        this.coachAthletesRepo = Objects.requireNonNull(coachAthletesRepo);
         this.athleteExtraRepo = Objects.requireNonNull(athleteExtraRepository);
     }
 
@@ -54,13 +46,13 @@ public class TrainerService {
         );
     }
 
-    public Map<String, Object> getTrainerStats(int trainerId) {
-        long totalSessions = statsRepo.countTotalSessions(trainerId);
-        long completedTrainings = statsRepo.countCompletedTrainings(trainerId);
-        long trainingsThisWeek = statsRepo.countTrainingsThisWeek(trainerId);
-        long matchesPlayed = statsRepo.countMatchesPlayed(trainerId);
-        long matchesThisMonth = statsRepo.countMatchesThisMonth(trainerId);
-        long totalAthletes = statsRepo.countTotalAthletes(trainerId);
+    public Map<String, Object> getCoachStats(int coachId) {
+        long totalSessions = statsRepo.countTotalSessions(coachId);
+        long completedTrainings = statsRepo.countCompletedTrainings(coachId);
+        long trainingsThisWeek = statsRepo.countTrainingsThisWeek(coachId);
+        long matchesPlayed = statsRepo.countMatchesPlayed(coachId);
+        long matchesThisMonth = statsRepo.countMatchesThisMonth(coachId);
+        long totalAthletes = statsRepo.countTotalAthletes(coachId);
 
         return Map.of(
                 "completedTrainings", completedTrainings,
@@ -72,12 +64,12 @@ public class TrainerService {
         );
     }
 
-    public List<AlertDTO> getTrainerAlerts(int trainerId, int days, int limit, String category) {
+    public List<AlertDTO> getCoachAlerts(int coachId, int days, int limit, String category) {
         int safeDays = Math.max(1, Math.min(days, 90));
         int safeLimit = Math.max(1, Math.min(limit, 100));
         String cat = (category == null || category.isBlank()) ? null : category;
 
-//        return alertsRepo.findTrainerAlerts(trainerId, safeDays, safeLimit, cat)
+//        return alertsRepo.findCoachAlerts(coachId, safeDays, safeLimit, cat)
 //                .stream()
 //                .map(r -> new AlertDTO(
 //                        r.getId(),
@@ -153,16 +145,16 @@ public class TrainerService {
         }
     }
 
-    public List<AthleteDTO> getAthletesTrainer(int trainerId, String q, int limit, int offset) {
+    public List<AthleteDTO> getAthletesCoach(int coachId, String q, int limit, int offset) {
         int safeLimit = Math.max(1, Math.min(limit, 200));
         int safeOffset = Math.max(0, offset);
 
-        List<TrainerAthletesRepository.AthleteRow> rows =
-                trainerAthletesRepo.findAthletes(trainerId, (q == null || q.isBlank()) ? null : q, safeLimit, safeOffset);
+        List<CoachAthletesRepository.AthleteRow> rows =
+                coachAthletesRepo.findAthletes(coachId, (q == null || q.isBlank()) ? null : q, safeLimit, safeOffset);
 
         return rows.stream().map(r -> {
             // Buscar extras do atleta
-            var extraOpt = athleteExtraRepo.findByAtleta_IdAtleta(r.getId());
+            var extraOpt = athleteExtraRepo.findByAthlete_Id(r.getId());
 
             AthleteExtraDTO extra = extraOpt.map(e -> new AthleteExtraDTO(
                     e.getHeightCm(),
@@ -181,9 +173,9 @@ public class TrainerService {
                     r.getEmail(),
                     r.getBirth() != null ? r.getBirth().toString() : null,
                     r.getPhone(),
-                    r.getShirt_number() != null ? String.valueOf(r.getShirt_number()) : null,
+                    r.getJersey_number() != null ? String.valueOf(r.getJersey_number()) : null,
                     r.getPosition(),
-                    r.getAvatar_url(),
+                    r.getPhoto(),
                     extra
             );
         }).toList();

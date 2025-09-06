@@ -1,6 +1,6 @@
 package com.simada_backend.model.session;
 
-import com.simada_backend.model.athlete.Atleta;
+import com.simada_backend.model.athlete.Athlete;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,25 +13,25 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "metricas")
-public class Metricas {
+@Table(name = "metrics")
+public class Metrics {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_metricas")
-    private Integer idMetricas;
+    @Column(name = "id")
+    private Integer id;
 
     // FK Sessao
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_sessao", nullable = false)
-    private Sessao sessao;
+    @JoinColumn(name = "id_session", nullable = false)
+    private Session session;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_atleta")
-    private Atleta atleta;
+    @JoinColumn(name = "id_athlete")
+    private Athlete athlete;
 
     @Column(name = "session")
-    private String session;
+    private String sessionName;
     @Column(name = "task")
     private String task;
     @Column(name = "date")

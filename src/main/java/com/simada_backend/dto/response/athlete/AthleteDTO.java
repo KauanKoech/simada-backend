@@ -6,7 +6,7 @@ public record AthleteDTO(
         String email,
         String birth,
         String phone,
-        String shirt_number,
+        String jersey_number,
         String position,
         String avatarUrl,
         AthleteExtraDTO extra

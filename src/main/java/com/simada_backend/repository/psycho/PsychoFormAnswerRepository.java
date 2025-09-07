@@ -1,4 +1,4 @@
-package com.simada_backend.repository.psychoForm;
+package com.simada_backend.repository.psycho;
 
 import com.simada_backend.model.psychoForm.PsychoFormAnswer;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,7 +9,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface PsychoFormAnswerRepository extends JpaRepository<PsychoFormAnswer, Long> {
-        @Query(value = """
+
+    @Query(value = """
             SELECT
               pfa.id                                   AS id,
               pfa.id_session                           AS id_session,

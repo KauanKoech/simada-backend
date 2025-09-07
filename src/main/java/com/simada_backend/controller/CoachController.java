@@ -2,7 +2,6 @@ package com.simada_backend.controller;
 
 import com.simada_backend.dto.response.*;
 import com.simada_backend.dto.response.athlete.AthleteDTO;
-import com.simada_backend.repository.coach.CoachRepository;
 import com.simada_backend.service.CoachService;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,16 +31,6 @@ public class CoachController {
             @RequestParam int coachId
     ) {
         return coachService.getCoachStats(coachId);
-    }
-
-    @GetMapping("/alerts")
-    public List<AlertDTO> alerts(
-            @RequestParam int coachId,
-            @RequestParam(defaultValue = "7") int days,
-            @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(required = false) String category
-    ) {
-        return coachService.getCoachAlerts(coachId, days, limit, category);
     }
 
     @GetMapping("/athletes")

@@ -1,6 +1,5 @@
 package com.simada_backend.service;
 
-import com.simada_backend.dto.response.AlertDTO;
 import com.simada_backend.dto.response.athlete.AthleteDTO;
 import com.simada_backend.dto.response.TopPerformerDTO;
 import com.simada_backend.dto.response.athlete.AthleteExtraDTO;
@@ -18,6 +17,7 @@ public class CoachService {
     private final CoachStatsRepository statsRepo;
     private final CoachAthletesRepository coachAthletesRepo;
     private final AthleteExtraRepository athleteExtraRepo;
+
 
     public CoachService(
             CoachStatsRepository coachStatsRepository,
@@ -62,87 +62,6 @@ public class CoachService {
                 "totalSessions", totalSessions,
                 "totalAthletes", totalAthletes
         );
-    }
-
-    public List<AlertDTO> getCoachAlerts(int coachId, int days, int limit, String category) {
-        int safeDays = Math.max(1, Math.min(days, 90));
-        int safeLimit = Math.max(1, Math.min(limit, 100));
-        String cat = (category == null || category.isBlank()) ? null : category;
-
-//        return alertsRepo.findCoachAlerts(coachId, safeDays, safeLimit, cat)
-//                .stream()
-//                .map(r -> new AlertDTO(
-//                        r.getId(),
-//                        r.getDate(),
-//                        r.getType(),
-//                        r.getMessage(),
-//                        r.getStatus(),
-//                        r.getAction(),
-//                        r.getAthlete_name(),
-//                        r.getAthlete_photo(),
-//                        r.getPrev_value(),
-//                        r.getCurr_value(),
-//                        r.getPercent(),
-//                        r.getUnit()
-//                ))
-//                .toList();
-
-        if ("PSYCHO".equals(cat)) {
-            // MOCK PSYCHO
-            return List.of(
-                    new AlertDTO(
-                            101L,
-                            LocalDateTime.now().minusDays(1),
-                            "PSYCHO",
-                            "Fadiga elevada detectada no questionário diário",
-                            "CAUTION",
-                            "Rever carga desta semana",
-                            "João Silva",
-                            "https://i.pravatar.cc/150?img=3",
-                            null, null, null, null,
-                            "Alto", "Neutro", 5
-                    ),
-                    new AlertDTO(
-                            102L,
-                            LocalDateTime.now().minusDays(2),
-                            "PSYCHO",
-                            "Qualidade de sono abaixo do ideal",
-                            "LOW",
-                            "Orientar higiene do sono",
-                            "Maria Souza",
-                            "https://i.pravatar.cc/150?img=4",
-                            null, null, null, null,
-                            "Moderada", "Ruim", 4
-                    )
-            );
-        } else {
-            return List.of(
-                    new AlertDTO(
-                            1L,
-                            LocalDateTime.now().minusDays(1),
-                            "PERFORMANCE",
-                            "Alerta: queda de performance detectada",
-                            "ABERTO",
-                            "Recomendar descanso",
-                            "João Silva",
-                            "https://i.pravatar.cc/150?img=1",
-                            90.0, 75.0, -16.6, "PlayerLoad",   // performance
-                            null, null, null                   // psico
-                    ),
-                    new AlertDTO(
-                            2L,
-                            LocalDateTime.now().minusDays(2),
-                            "PERFORMANCE",
-                            "Alerta: alta carga aguda detectada",
-                            "RESOLVIDO",
-                            "Reduzir intensidade",
-                            "Maria Souza",
-                            "https://i.pravatar.cc/150?img=2",
-                            60.0, 95.0, 58.3, "ACWR",
-                            null, null, null
-                    )
-            );
-        }
     }
 
     public List<AthleteDTO> getAthletesCoach(int coachId, String q, int limit, int offset) {

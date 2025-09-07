@@ -5,9 +5,10 @@ import com.simada_backend.dto.response.PsychoAnswerDTO;
 import com.simada_backend.model.psychoForm.PsychoFormAnswer;
 import com.simada_backend.model.psychoForm.PsychoFormInvite;
 import com.simada_backend.repository.athlete.AthleteRepository;
-import com.simada_backend.repository.psychoForm.PsychoFormInviteRepository;
-import com.simada_backend.repository.psychoForm.PsychoFormAnswerRepository;
+import com.simada_backend.repository.psycho.PsychoFormInviteRepository;
+import com.simada_backend.repository.psycho.PsychoFormAnswerRepository;
 import com.simada_backend.repository.session.MetricsRepository;
+import com.simada_backend.service.AlertsService;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.util.*;
 @Service
 public class PsychoFormService {
 
+    private final AlertsService alertsService;
     private final PsychoFormInviteRepository inviteRepo;
     private final PsychoFormAnswerRepository answerRepo;
     private final AthleteRepository athleteRepo;
@@ -28,6 +30,7 @@ public class PsychoFormService {
                              PsychoFormAnswerRepository answerRepo,
                              AthleteRepository athleteRepo,
                              MetricsRepository metricsRepo,
+                             AlertsService alertsService,
                              JavaMailSender mailSender
     ) {
         this.inviteRepo = Objects.requireNonNull(inviteRepo);
@@ -35,6 +38,7 @@ public class PsychoFormService {
         this.athleteRepo = Objects.requireNonNull(athleteRepo);
         this.metricsRepo = Objects.requireNonNull(metricsRepo);
         this.mailSender = Objects.requireNonNull(mailSender);
+        this.alertsService = Objects.requireNonNull(alertsService);
     }
 
     public List<PsychoFormInvite> createConvites(Long coachId, Long sessionId, String publicBaseUrl) {
@@ -130,6 +134,8 @@ public class PsychoFormService {
 
         convite.setStatus("ANSWERED");
         inviteRepo.save(convite);
+
+        alertsService.processAnswer(convite, resp);
     }
 
     public List<PsychoAnswerDTO> getPsychoAnswersBySession(Long sessionId) {

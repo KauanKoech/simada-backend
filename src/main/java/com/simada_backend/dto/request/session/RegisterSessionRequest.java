@@ -22,7 +22,6 @@ public class RegisterSessionRequest {
         @JsonAlias({"date", "data"})
         private String date;
 
-        @NotNull @Min(0)
         @JsonAlias({"athletes_count", "athletesCount"})
         private Integer athletesCount;
 

@@ -1,6 +1,6 @@
 package com.simada_backend.repository.psycho;
 
-import com.simada_backend.model.psychoForm.PsychoRiskScore;
+import com.simada_backend.model.psycho.PsychoRiskScore;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

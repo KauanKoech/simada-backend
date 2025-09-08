@@ -1,6 +1,6 @@
 package com.simada_backend.repository.psycho;
 
-import com.simada_backend.model.psychoForm.PsychoAlert;
+import com.simada_backend.model.psycho.PsychoAlert;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 

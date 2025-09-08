@@ -1,6 +1,6 @@
 package com.simada_backend.repository.psycho;
 
-import com.simada_backend.model.psychoForm.PsychoFormInvite;
+import com.simada_backend.model.psycho.PsychoFormInvite;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

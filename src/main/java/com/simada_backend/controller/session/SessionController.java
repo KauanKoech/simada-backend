@@ -35,7 +35,7 @@ public class SessionController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Void> registerCoach(@Valid @RequestBody RegisterSessionRequest request) {
+    public ResponseEntity<Void> registerSession(@Valid @RequestBody RegisterSessionRequest request) {
         sessionService.registerSession(request);
         return ResponseEntity.noContent().build();
     }

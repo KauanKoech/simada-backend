@@ -1,4 +1,4 @@
-package com.simada_backend.model.psychoForm;
+package com.simada_backend.model.psycho;
 
 import jakarta.persistence.*;
 import lombok.Getter;

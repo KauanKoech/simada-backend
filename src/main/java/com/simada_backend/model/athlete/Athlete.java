@@ -13,7 +13,6 @@ import lombok.Setter;
 public class Athlete {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 

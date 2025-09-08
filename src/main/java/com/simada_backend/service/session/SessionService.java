@@ -59,7 +59,7 @@ public class SessionService {
 
     @Transactional
     public void registerSession(RegisterSessionRequest req) {
-        Coach coach = coachRepo.findById(req.getCoachId())
+        Coach coach = coachRepo.findByIdWithUser(req.getCoachId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Treinador não encontrado"));
 
         LocalDate date;

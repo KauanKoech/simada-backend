@@ -8,5 +8,5 @@ import lombok.Setter;
 public class RegisterCoachRequest {
     private String email;
     private String password;
-    private String fullName;
+    private String name;
 }

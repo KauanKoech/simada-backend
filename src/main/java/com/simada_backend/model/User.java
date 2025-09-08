@@ -4,15 +4,15 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @Entity
 @Table(name = "user")
 public class User {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "name")
@@ -34,7 +34,7 @@ public class User {
     private String userType;
 
     @Column(name = "birthDate")
-    private java.time.LocalDate birthDate;
+    private LocalDate birthDate;
 
     @Column(name = "phone")
     private String phone;

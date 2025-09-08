@@ -10,6 +10,6 @@ public class RegisterAthleteRequest {
     private String email;
     private String password;
     private String name;
-    private int shirtNumber;
+    private int jerseyNumber;
     private String position;
 }

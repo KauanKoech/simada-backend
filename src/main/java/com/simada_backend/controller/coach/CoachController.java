@@ -1,8 +1,7 @@
-package com.simada_backend.controller;
+package com.simada_backend.controller.coach;
 
 import com.simada_backend.dto.response.*;
 import com.simada_backend.dto.response.athlete.AthleteDTO;
-import com.simada_backend.service.coach.CoachProfileService;
 import com.simada_backend.service.coach.CoachService;
 import org.springframework.web.bind.annotation.*;
 

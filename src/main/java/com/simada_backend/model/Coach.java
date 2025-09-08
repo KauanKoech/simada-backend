@@ -4,14 +4,12 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
-@Setter
 @Entity
 @Table(name = "coach")
+@Getter @Setter
 public class Coach {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 
@@ -22,7 +20,6 @@ public class Coach {
     private String team;
 
     @OneToOne
-    @MapsId
     @JoinColumn(name = "id_user")
     private User user;
 }

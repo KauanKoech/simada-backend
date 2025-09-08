@@ -43,21 +43,23 @@ public class AuthService {
         }
 
         User user = new User();
-        user.setName(request.getFullName());
+        user.setName(request.getName());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setPhoto("");
-        user.setUserType("treinador");
+        user.setUserType("coach");
         userRepository.save(user);
 
         Coach coach = new Coach();
-        coach.setName(request.getFullName());
+        coach.setName(request.getName());
+        coach.setId(user.getId());
         coach.setUser(user);
         coachRepository.save(coach);
 
         return new UserResponseDTO(user.getId(), user.getEmail(), user.getName(),
                 user.getUserType(), user.getPhoto());
     }
+
 
     @Transactional
     public UserResponseDTO registerAthlete(RegisterAthleteRequest request) {
@@ -70,7 +72,7 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setPhoto("");
-        user.setUserType("atleta");
+        user.setUserType("athlete");
         userRepository.save(user);
 
         Coach coach = coachRepository.findById((long) request.getIdCoach())
@@ -78,7 +80,8 @@ public class AuthService {
 
         Athlete athlete = new Athlete();
         athlete.setName(request.getName());
-        athlete.setJerseyNumber(request.getShirtNumber());
+        athlete.setId(user.getId());
+        athlete.setJerseyNumber(request.getJerseyNumber());
         athlete.setPosition(request.getPosition());
         athlete.setUser(user);
         athlete.setCoach(coach);

@@ -114,6 +114,7 @@ public class InviteService {
             invitationRepo.save(inv);
             throw new IllegalStateException("Invite expired");
         }
+        System.out.println("COACH NAME: " + inv.getCoach().getName());
         return new InviteInfo(inv.getEmail(), inv.getCoach().getName());
     }
 
@@ -147,6 +148,7 @@ public class InviteService {
         // 2) Atleta (minimize NOT NULLs)
         Athlete a = new Athlete();
         a.setUser(u);
+        a.setId(u.getId());
         a.setName(u.getName());
         a.setCoach(coach);
         if (position != null && !position.isBlank()) {

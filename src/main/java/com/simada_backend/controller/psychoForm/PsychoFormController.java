@@ -3,7 +3,7 @@ package com.simada_backend.controller.psychoForm;
 
 import com.simada_backend.dto.request.psychoForm.PsychoFormCreateRequest;
 import com.simada_backend.dto.request.psychoForm.PsychoFormSubmitRequest;
-import com.simada_backend.dto.response.PsychoAnswerDTO;
+import com.simada_backend.dto.response.psycho.PsychoAnswerDTO;
 import com.simada_backend.model.psychoForm.PsychoFormInvite;
 import com.simada_backend.service.psychoForm.PsychoFormService;
 import org.springframework.beans.factory.annotation.Value;

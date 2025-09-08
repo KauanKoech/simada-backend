@@ -1,7 +1,7 @@
 package com.simada_backend.controller.session;
 
 import com.simada_backend.dto.request.session.RegisterSessionRequest;
-import com.simada_backend.dto.response.CoachSessionDTO;
+import com.simada_backend.dto.response.coach.CoachSessionDTO;
 import com.simada_backend.service.session.SessionService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;

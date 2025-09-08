@@ -1,7 +1,7 @@
 package com.simada_backend.controller;
 
-import com.simada_backend.dto.response.PsychoAlertDTO;
-import com.simada_backend.dto.response.PsychoAnswerAthleteDTO;
+import com.simada_backend.dto.response.psycho.PsychoAlertDTO;
+import com.simada_backend.dto.response.psycho.PsychoAnswerAthleteDTO;
 import com.simada_backend.service.AlertsService;
 import org.springframework.web.bind.annotation.*;
 

@@ -19,7 +19,10 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults()) // <-- importante!
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // preflight
-                        .requestMatchers("/api/**").permitAll() // ajuste conforme seu controle de auth
+                        .requestMatchers(
+                                "/api/**",
+                                "/static/**"
+                        ).permitAll() // ajuste conforme seu controle de auth
                         .anyRequest().permitAll()
                 );
 

@@ -18,7 +18,11 @@ public class Coach {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "team")
+    private String team;
+
     @OneToOne
+    @MapsId
     @JoinColumn(name = "id_user")
     private User user;
 }

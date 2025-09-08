@@ -1,7 +1,7 @@
 package com.simada_backend.service.psychoForm;
 
 import com.simada_backend.dto.request.psychoForm.PsychoFormSubmitRequest;
-import com.simada_backend.dto.response.PsychoAnswerDTO;
+import com.simada_backend.dto.response.psycho.PsychoAnswerDTO;
 import com.simada_backend.model.psychoForm.PsychoFormAnswer;
 import com.simada_backend.model.psychoForm.PsychoFormInvite;
 import com.simada_backend.repository.athlete.AthleteRepository;

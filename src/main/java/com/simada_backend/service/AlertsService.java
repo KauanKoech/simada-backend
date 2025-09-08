@@ -1,7 +1,7 @@
 package com.simada_backend.service;
 
-import com.simada_backend.dto.response.PsychoAlertDTO;
-import com.simada_backend.dto.response.PsychoAnswerAthleteDTO;
+import com.simada_backend.dto.response.psycho.PsychoAlertDTO;
+import com.simada_backend.dto.response.psycho.PsychoAnswerAthleteDTO;
 import com.simada_backend.model.psychoForm.*;
 import com.simada_backend.repository.psycho.PsychoAlertRepository;
 import com.simada_backend.repository.psycho.PsychoRiskScoreRepository;

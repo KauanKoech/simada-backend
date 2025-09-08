@@ -2,7 +2,8 @@ package com.simada_backend.controller;
 
 import com.simada_backend.dto.response.*;
 import com.simada_backend.dto.response.athlete.AthleteDTO;
-import com.simada_backend.service.CoachService;
+import com.simada_backend.service.coach.CoachProfileService;
+import com.simada_backend.service.coach.CoachService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +19,7 @@ public class CoachController {
     public CoachController(CoachService coachService) {
         this.coachService = coachService;
     }
+
     @GetMapping("/top-performers")
     public List<TopPerformerDTO> topPerformers(
             @RequestParam(name = "limit", defaultValue = "3") int limit
@@ -37,7 +39,6 @@ public class CoachController {
     public List<AthleteDTO> myAthletes(
             @RequestParam Integer coachId,
             @RequestParam(required = false) String q,
-            @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "50") int limit,
             @RequestParam(defaultValue = "0") int offset
     ) {

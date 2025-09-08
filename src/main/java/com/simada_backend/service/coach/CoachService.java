@@ -1,4 +1,4 @@
-package com.simada_backend.service;
+package com.simada_backend.service.coach;
 
 import com.simada_backend.dto.response.athlete.AthleteDTO;
 import com.simada_backend.dto.response.TopPerformerDTO;

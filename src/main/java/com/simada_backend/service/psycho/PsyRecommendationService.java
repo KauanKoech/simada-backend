@@ -1,4 +1,4 @@
-package com.simada_backend.service.psychoForm;
+package com.simada_backend.service.psycho;
 
 import com.simada_backend.dto.request.psychoForm.PsyRecoRequest;
 import com.simada_backend.domain.psycho.PsyRecommendation;

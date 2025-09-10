@@ -2,7 +2,7 @@ package com.simada_backend.controller.coach;
 
 import com.simada_backend.dto.request.psychoForm.PsyRecoRequest;
 import com.simada_backend.dto.response.psycho.PsyRecoResponseDTO;
-import com.simada_backend.service.psychoForm.PsyRecommendationService;
+import com.simada_backend.service.psycho.PsyRecommendationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

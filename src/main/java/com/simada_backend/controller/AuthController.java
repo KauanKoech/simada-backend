@@ -16,6 +16,10 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
+
     @PostMapping("/register/coach")
     public UserResponseDTO registerCoach(@RequestBody RegisterCoachRequest request) {
         return authService.registerCoach(request);

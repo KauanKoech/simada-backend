@@ -14,11 +14,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/session")
 @CrossOrigin(origins = "http://localhost:3000")
-public class SessionController {
+public class SessionCoachController {
 
     private final SessionService sessionService;
 
-    public SessionController(SessionService sessionService) {
+    public SessionCoachController(SessionService sessionService) {
         this.sessionService = sessionService;
     }
 

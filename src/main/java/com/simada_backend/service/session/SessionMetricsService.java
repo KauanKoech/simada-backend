@@ -5,9 +5,13 @@ import com.simada_backend.dto.response.SessionDTO;
 import com.simada_backend.model.athlete.Athlete;
 import com.simada_backend.model.session.Metrics;
 import com.simada_backend.model.session.Session;
+import com.simada_backend.model.session.TrainingLoadAlert;
+import com.simada_backend.repository.session.TrainingLoadAlertRepository;
+import com.simada_backend.service.loadCalculator.*;
 import com.simada_backend.repository.athlete.AthleteRepository;
 import com.simada_backend.repository.session.MetricsRepository;
 import com.simada_backend.repository.session.CoachSessionsRepository;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -16,33 +20,33 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+
 import jakarta.transaction.Transactional;
 
 import java.io.*;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class SessionMetricsService {
 
+    private final SessionLoadRepo sessionLoadRepo;
     private final CoachSessionsRepository sessionsRepo;
     private final MetricsRepository metricasRepo;
     private final AthleteRepository atletaRepo;
+    private final WeeklyLoadQueryRepository weeklyLoadQueryRepository;
+    private final TrainingLoadAlertRepository trainingLoadAlertRepository;
 
-    public SessionMetricsService(CoachSessionsRepository sessionsRepo,
-                                 MetricsRepository metricasRepo,
-                                 AthleteRepository atletaRepo) {
-        this.sessionsRepo = sessionsRepo;
-        this.metricasRepo = metricasRepo;
-        this.atletaRepo = atletaRepo;
-    }
 
     @Transactional
-    public void importMetricsFromCsv(int sessionId, MultipartFile file) {
+    public void importMetricsFromCsv(int sessionId, MultipartFile file) throws CsvParsingException {
         // 1) Carrega a sessão
         Session session = sessionsRepo.findById(sessionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sessão não encontrada"));
@@ -82,6 +86,7 @@ public class SessionMetricsService {
             String COL_PLAYER = pick(hdr, "player", "jogador", "atleta", "nome", "full_name");
             String COL_DORSAL = pick(hdr, "dorsal", "shirt_number", "numero_camisa", "camisa");
             String COL_TIME = pick(hdr, "time", "tempo", "minutos");
+            String COL_DATE = pick(hdr, "date", "data");
             String COL_TDIST = pick(hdr, "total_distance", "dist_total", "distancia_total");
             String COL_MINDIST = pick(hdr, "minute_distance", "dist_minuto", "distancia_minuto");
             String COL_V1 = pick(hdr, "distance_vrange1", "vrange1", "dist_v1");
@@ -149,36 +154,58 @@ public class SessionMetricsService {
                 m.setSession(session);
                 m.setAthlete(athlete);
 
-                m.setTime(tryParseBigDecimalPt(get(rec, COL_TIME)));
-                m.setTotalDistance(tryParseBigDecimalPt(get(rec, COL_TDIST)));
-                m.setMinuteDistance(tryParseBigDecimalPt(get(rec, COL_MINDIST)));
-                m.setDistanceVrange1(tryParseBigDecimalPt(get(rec, COL_V1)));
-                m.setDistanceVrange2(tryParseBigDecimalPt(get(rec, COL_V2)));
-                m.setDistanceVrange3(tryParseBigDecimalPt(get(rec, COL_V3)));
-                m.setDistanceVrange4(tryParseBigDecimalPt(get(rec, COL_V4)));
-                m.setDistanceVrange5(tryParseBigDecimalPt(get(rec, COL_V5)));
-                m.setDistanceVrange6(tryParseBigDecimalPt(get(rec, COL_V6)));
-                m.setMaxSpeed(tryParseBigDecimalPt(get(rec, COL_VMAX)));
-                m.setAverageSpeed(tryParseBigDecimalPt(get(rec, COL_VAVG)));
+                m.setTime(tryParseDoublePt(get(rec, COL_TIME)));
+                m.setDate(tryParseLocalDate(get(rec, COL_DATE)));
+                m.setTotalDistance(tryParseDoublePt(get(rec, COL_TDIST)));
+                m.setMinuteDistance(tryParseDoublePt(get(rec, COL_MINDIST)));
+                m.setDistanceVrange1(tryParseDoublePt(get(rec, COL_V1)));
+                m.setDistanceVrange2(tryParseDoublePt(get(rec, COL_V2)));
+                m.setDistanceVrange3(tryParseDoublePt(get(rec, COL_V3)));
+                m.setDistanceVrange4(tryParseDoublePt(get(rec, COL_V4)));
+                m.setDistanceVrange5(tryParseDoublePt(get(rec, COL_V5)));
+                m.setDistanceVrange6(tryParseDoublePt(get(rec, COL_V6)));
+                m.setMaxSpeed(tryParseDoublePt(get(rec, COL_VMAX)));
+                m.setAverageSpeed(tryParseDoublePt(get(rec, COL_VAVG)));
                 m.setNumDecExpl(tryParseInt(get(rec, COL_DEC_N)));
-                m.setMaxDec(tryParseBigDecimalPt(get(rec, COL_DEC_MAX)));
+                m.setMaxDec(tryParseDoublePt(get(rec, COL_DEC_MAX)));
                 m.setNumAccExpl(tryParseInt(get(rec, COL_ACC_N)));
-                m.setMaxAcc(tryParseBigDecimalPt(get(rec, COL_ACC_MAX)));
-                m.setPlayerLoad(tryParseBigDecimalPt(get(rec, COL_PL)));
-                m.setHmld(tryParseBigDecimalPt(get(rec, COL_HMLD)));
+                m.setMaxAcc(tryParseDoublePt(get(rec, COL_ACC_MAX)));
+                m.setPlayerLoad(tryParseDoublePt(get(rec, COL_PL)));
+                m.setHmld(tryParseDoublePt(get(rec, COL_HMLD)));
                 m.setHmldCount(tryParseInt(get(rec, COL_HMLD_C)));
-                m.setHmldRelative(tryParseBigDecimalPt(get(rec, COL_HMLD_R)));
-                m.setHmldTime(tryParseBigDecimalPt(get(rec, COL_HMLD_T)));
+                m.setHmldRelative(tryParseDoublePt(get(rec, COL_HMLD_R)));
+                m.setHmldTime(tryParseDoublePt(get(rec, COL_HMLD_T)));
                 m.setHidIntervals(tryParseInt(get(rec, COL_HID_INT)));
                 m.setNumHids(tryParseInt(get(rec, COL_HIDS_N)));
-                m.setHsr(tryParseBigDecimalPt(get(rec, COL_HSR)));
+                m.setHsr(tryParseDoublePt(get(rec, COL_HSR)));
                 m.setSprints(tryParseInt(get(rec, COL_SPRINTS)));
                 m.setNumHsr(tryParseInt(get(rec, COL_HSR_N)));
-                m.setTimeVrange4(tryParseBigDecimalPt(get(rec, COL_TVR4)));
-                m.setRpe(tryParseBigDecimalPt(get(rec, COL_RPE)));
+                m.setTimeVrange4(tryParseDoublePt(get(rec, COL_TVR4)));
+                m.setRpe(tryParseDoublePt(get(rec, COL_RPE)));
 
                 batch.add(m);
                 distinctAthleteIds.add(athlete.getId());
+
+                // 4) Loads
+                LoadCalculator.Result calc = LoadCalculator.compute(m);
+
+                Long sessionIdLong = session.getId() == null ? null : session.getId().longValue();
+                Long athleteIdLong = athlete.getId();
+
+                SessionLoad load = sessionLoadRepo
+                        .findBySessionIdAndAthleteId(sessionIdLong, athleteIdLong)
+                        .orElseGet(SessionLoad::new);
+
+                load.setSessionId(sessionIdLong);
+                load.setAthleteId(athleteIdLong);
+                load.setLoadSrpe(calc.loadSrpe);
+                load.setLoadPlSim(calc.loadPlSim);
+                load.setLoadEffective(calc.loadEffective);
+                load.setLoadSource(Enum.valueOf(LoadSource.class, calc.loadSource));
+                load.setFormulaVersion(calc.formulaVersion);
+                load.setParamsJson(calc.paramsJson);
+                sessionLoadRepo.save(load);
+
             }
 
             // Persiste tudo
@@ -187,9 +214,82 @@ public class SessionMetricsService {
             //Atualiza num_atletas na sessão
             session.setNumAthletes(distinctAthleteIds.size());
             sessionsRepo.save(session);
+
+            final Long sessionIdLong = session.getId() == null ? null : session.getId().longValue();
+            final Long coachIdLong = (session.getCoach() != null ? session.getCoach().getId() : null);
+
+            System.out.println("Distict Athletes: " + distinctAthleteIds.size());
+            for (Long aid : distinctAthleteIds) {
+                LocalDate latest = weeklyLoadQueryRepository.findLatestQwStart(aid);
+                if (latest == null) {
+                    System.out.println("Sem histórico na view para athleteId=" + aid);
+                    continue;
+                }
+
+                var rows = weeklyLoadQueryRepository.qwWindow(aid, latest, latest);
+                System.out.println("Rows(" + aid + "," + latest + "): " + rows);
+                System.out.println("Rows: " + rows);
+                if (rows == null || rows.isEmpty()) continue;
+
+                var r = rows.get(rows.size() - 1);
+
+                // Classificar
+                String acwrL = Labels.acwrLabel(toDouble(r.getAcwr()));
+                String pctQwUpL = Labels.pctQwUpLabel(toDouble(r.getPctQwUp()));
+                String monoL = Labels.monotonyLabel(toDouble(r.getMonotony()));
+                String strainL = Labels.strainLabel(toDouble(r.getStrain()));
+
+                boolean hasAlert =
+                        isAttentionOrRisk(acwrL) ||
+                                isAttentionOrRisk(pctQwUpL) ||
+                                isAttentionOrRisk(monoL) ||
+                                isAttentionOrRisk(strainL);
+
+                if (!hasAlert) continue;
+
+                // Evita duplicar alerta do mesmo atleta na mesma sessão
+                boolean exists = trainingLoadAlertRepository
+                        .findByAthleteIdAndSessionId(aid, sessionIdLong)
+                        .isPresent();
+                if (exists) continue;
+
+                var alert = TrainingLoadAlert.builder()
+                        .athleteId(aid)
+                        .coachId(coachIdLong != null ? coachIdLong : 0L)
+                        .sessionId(sessionIdLong != null ? sessionIdLong : 0L)
+                        .qwStart(r.getQwStart())
+
+                        .acwr(toDouble(r.getAcwr()))
+                        .acwrLabel(acwrL)
+
+                        .pctQwUp(toDouble(r.getPctQwUp()))
+                        .pctQwUpLabel(pctQwUpL)
+
+                        .monotony(toDouble(r.getMonotony()))
+                        .monotonyLabel(monoL)
+
+                        .strain(toDouble(r.getStrain()))
+                        .strainLabel(strainL)
+                        .createdAt(Instant.now())
+
+                        .build();
+                trainingLoadAlertRepository.save(alert);
+            }
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Erro ao processar CSV", e);
         }
+    }
+
+    private static Double toDouble(BigDecimal bd) {
+        return bd != null ? bd.doubleValue() : null;
+    }
+
+    private static boolean isAttentionOrRisk(String label) {
+        if (label == null) return false;
+        return switch (label) {
+            case "atenção", "risco", "alto_risco" -> true;
+            default -> false;
+        };
     }
 
     @Transactional
@@ -306,17 +406,41 @@ public class SessionMetricsService {
         }
     }
 
-    private static BigDecimal tryParseBigDecimalPt(String s) {
+    private static Double tryParseDoublePt(String s) {
         if (s == null || s.isBlank()) return null;
         String t = s.trim();
         if (t.contains(",")) {
             t = t.replace(".", "").replace(",", ".");
         }
         try {
-            return new BigDecimal(t);
+            return Double.parseDouble(t);
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private static final DateTimeFormatter[] DATE_PATTERNS = new DateTimeFormatter[]{
+            DateTimeFormatter.ofPattern("d/M/uuuu"),
+            DateTimeFormatter.ofPattern("dd/MM/uuuu"),
+            DateTimeFormatter.ofPattern("M/d/uuuu"),
+            DateTimeFormatter.ofPattern("MM/dd/uuuu"),
+            DateTimeFormatter.ofPattern("M/dd/uuuu"),
+            DateTimeFormatter.ofPattern("MM/d/uuuu"),
+    };
+
+    public static LocalDate tryParseLocalDate(String raw) throws CsvParsingException {
+        String s = normalize(raw);
+        for (DateTimeFormatter f : DATE_PATTERNS) {
+            try {
+                return LocalDate.parse(s, f);
+            } catch (DateTimeParseException ignore) {
+            }
+        }
+        throw new CsvParsingException("data inválida: " + raw);
+    }
+
+    private static String normalize(String s) {
+        return s == null ? null : s.trim();
     }
 
     private Athlete resolveAtletaRepo(String playerName, Integer dorsal) {

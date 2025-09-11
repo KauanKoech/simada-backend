@@ -2,7 +2,10 @@ package com.simada_backend.service.athlete;
 
 import com.simada_backend.dto.response.athlete.*;
 import com.simada_backend.dto.request.athlete.*;
+import com.simada_backend.repository.UserRepository;
 import com.simada_backend.repository.athlete.AthleteProfileRepository;
+import com.simada_backend.repository.athlete.AthleteRepository;
+import com.simada_backend.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -16,8 +19,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AthleteProfileService {
 
+    private final AthleteRepository athleteRepository;
+    private final UserRepository userRepo;
     private final AthleteProfileRepository repo;
     private final PasswordEncoder passwordEncoder;
+    private final FileStorageService fileStorage;
 
     private final Path uploadDir = Paths.get("uploads/avatars");
 
@@ -56,24 +62,16 @@ public class AthleteProfileService {
     }
 
     @Transactional
-    public UploadAvatarResponse uploadAvatar(Long athleteId, MultipartFile file) {
+    public String    uploadAvatar(Long athleteId, MultipartFile file) {
         try {
-            Long userId = repo.findUserIdByAthleteId(athleteId);
-            if (userId == null) throw new IllegalArgumentException("User not linked to athlete: " + athleteId);
+            var coach = athleteRepository.findById(athleteId)
+                    .orElseThrow(() -> new IllegalArgumentException("Athlete not found: " + athleteId));
 
-            if (!Files.exists(uploadDir)) Files.createDirectories(uploadDir);
 
-            String ext = OptionalExtension(file.getOriginalFilename());
-            String filename = "athlete-" + athleteId + "-" + UUID.randomUUID() + ext;
-            Path target = uploadDir.resolve(filename);
-
-            Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
-
-            // URL pública (ajuste se você expõe estáticos por outro caminho)
-            String publicUrl = "/uploads/avatars/" + filename;
-
-            repo.updateUserPhoto(userId, publicUrl);
-            return new UploadAvatarResponse(publicUrl);
+            String publicUrl = fileStorage.storeAthleteAvatar(athleteId, file);
+            coach.getUser().setPhoto(publicUrl);
+            userRepo.save(coach.getUser());
+            return publicUrl;
         } catch (Exception e) {
             throw new RuntimeException("Failed to upload avatar", e);
         }

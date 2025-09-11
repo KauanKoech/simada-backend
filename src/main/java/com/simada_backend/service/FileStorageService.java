@@ -36,6 +36,20 @@ public class FileStorageService {
         return publicBaseUrl + "/static/avatars/" + filename;
     }
 
+    public String storeAthleteAvatar(Long athleteId, MultipartFile file) throws Exception {
+        String ext = getExtension(file.getOriginalFilename());
+        String filename = "athlete-" + athleteId + "-" + Instant.now().toEpochMilli()
+                + "-" + UUID.randomUUID() + (ext.isBlank() ? "" : "." + ext);
+        Path target = root.resolve(filename).normalize();
+
+        try (InputStream in = file.getInputStream()) {
+            Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        // URL ABSOLUTA que o front pode usar diretamente no <img src="...">
+        return publicBaseUrl + "/static/avatars/" + filename;
+    }
+
     private String getExtension(String original) {
         if (!StringUtils.hasText(original)) return "";
         int i = original.lastIndexOf('.');

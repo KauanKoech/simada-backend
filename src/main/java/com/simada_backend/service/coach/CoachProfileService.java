@@ -59,7 +59,7 @@ public class CoachProfileService {
     @Transactional
     public String uploadAvatar(Long coachId, MultipartFile file) throws Exception {
         var coach = coachRepo.findByIdWithUser(coachId)
-                .orElseThrow(() -> new IllegalArgumentException("Coach não encontrado: " + coachId));
+                .orElseThrow(() -> new IllegalArgumentException("Coach not found: " + coachId));
 
         String publicUrl = fileStorage.storeCoachAvatar(coachId, file);
         coach.getUser().setPhoto(publicUrl);

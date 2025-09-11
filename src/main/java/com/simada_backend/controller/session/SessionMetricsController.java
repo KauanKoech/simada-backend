@@ -3,6 +3,7 @@ package com.simada_backend.controller.session;
 import com.simada_backend.dto.request.session.UpdateNotesRequest;
 import com.simada_backend.dto.request.session.UpdateSessionRequest;
 import com.simada_backend.dto.response.SessionDTO;
+import com.simada_backend.service.loadCalculator.CsvParsingException;
 import com.simada_backend.service.session.SessionMetricsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ public class SessionMetricsController {
     public ResponseEntity<Void> importMetrics(
             @PathVariable("sessionId") int sessionId,
             @RequestParam("file") MultipartFile file
-    ) {
+    ) throws CsvParsingException {
         service.importMetricsFromCsv(sessionId, file);
         return ResponseEntity.ok().build();
     }

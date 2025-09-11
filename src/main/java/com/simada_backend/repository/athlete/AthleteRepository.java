@@ -1,5 +1,6 @@
 package com.simada_backend.repository.athlete;
 
+import com.simada_backend.model.Coach;
 import com.simada_backend.model.athlete.Athlete;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -25,4 +26,5 @@ public interface AthleteRepository extends JpaRepository<Athlete, Long> {
 
     @Query("SELECT a.user.email FROM Athlete a WHERE a.id = :athleteId")
     Optional<String> findEmailByAthleteId(@Param("athleteId") Long athleteId);
+
 }

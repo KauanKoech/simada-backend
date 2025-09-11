@@ -1,11 +1,13 @@
 package com.simada_backend.controller.athlete;
 
+import com.simada_backend.controller.coach.CoachProfileController;
 import com.simada_backend.dto.request.athlete.UpdateAthleteProfileRequest;
 import com.simada_backend.dto.request.athlete.UpdatePasswordRequest;
 import com.simada_backend.dto.response.athlete.AthleteProfileDTO;
 import com.simada_backend.dto.response.athlete.UploadAvatarResponse;
 import com.simada_backend.service.athlete.AthleteProfileService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,14 +31,18 @@ public class AthleteProfileController {
     }
 
     @PostMapping("/{athleteId}/avatar")
-    public UploadAvatarResponse upload(@PathVariable Long athleteId,
-                                       @RequestParam("file") MultipartFile file) {
-        return service.uploadAvatar(athleteId, file);
+    public ResponseEntity<?> upload(@PathVariable Long athleteId,
+                                    @RequestParam("file") MultipartFile file) {
+        String photoUrl = service.uploadAvatar(athleteId, file);
+        return ResponseEntity.ok(new PhotoResponse(photoUrl));
     }
 
     @PostMapping("/{athleteId}/password")
     public void changePassword(@PathVariable Long athleteId,
                                @RequestBody UpdatePasswordRequest req) {
         service.changePassword(athleteId, req);
+    }
+
+    private record PhotoResponse(String photoUrl) {
     }
 }

@@ -1,4 +1,4 @@
-package com.simada_backend.domain.psycho;
+package com.simada_backend.model.recommendation;
 
 import jakarta.persistence.*;
 import lombok.*;

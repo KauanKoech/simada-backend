@@ -1,4 +1,4 @@
-package com.simada_backend.dto.request.psychoForm;
+package com.simada_backend.dto.request.psycho;
 
 import lombok.Data;
 import lombok.Getter;

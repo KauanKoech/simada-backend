@@ -1,6 +1,6 @@
 package com.simada_backend.service.psycho;
 
-import com.simada_backend.dto.request.psychoForm.PsychoFormSubmitRequest;
+import com.simada_backend.dto.request.psycho.PsychoFormSubmitRequest;
 import com.simada_backend.dto.response.psycho.PsychoAnswerDTO;
 import com.simada_backend.model.psycho.PsychoFormAnswer;
 import com.simada_backend.model.psycho.PsychoFormInvite;

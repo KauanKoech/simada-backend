@@ -1,6 +1,6 @@
-package com.simada_backend.repository.psycho;
+package com.simada_backend.repository.recommendation;
 
-import com.simada_backend.domain.psycho.PsyRecommendation;
+import com.simada_backend.model.recommendation.PsyRecommendation;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

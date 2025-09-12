@@ -1,9 +1,9 @@
-package com.simada_backend.service;
+package com.simada_backend.service.alert;
 
-import com.simada_backend.dto.response.psycho.PsychoAlertDTO;
+import com.simada_backend.dto.response.alert.PsychoAlertDTO;
 import com.simada_backend.dto.response.psycho.PsychoAnswerAthleteDTO;
 import com.simada_backend.model.psycho.*;
-import com.simada_backend.repository.psycho.PsychoAlertRepository;
+import com.simada_backend.repository.alert.PsychoAlertRepository;
 import com.simada_backend.repository.psycho.PsychoRiskScoreRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,12 +14,12 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Service
-public class AlertsService {
+public class PsychoService {
 
     private final PsychoRiskScoreRepository riskRepo;
     private final PsychoAlertRepository alertRepo;
 
-    public AlertsService(PsychoRiskScoreRepository riskRepo, PsychoAlertRepository alertRepo) {
+    public PsychoService(PsychoRiskScoreRepository riskRepo, PsychoAlertRepository alertRepo) {
         this.riskRepo = Objects.requireNonNull(riskRepo);
         this.alertRepo = Objects.requireNonNull(alertRepo);
     }

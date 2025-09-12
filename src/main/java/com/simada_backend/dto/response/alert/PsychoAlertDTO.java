@@ -1,4 +1,4 @@
-package com.simada_backend.dto.response.psycho;
+package com.simada_backend.dto.response.alert;
 
 
 import java.time.LocalDate;

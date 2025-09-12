@@ -1,4 +1,4 @@
-package com.simada_backend.repository.psycho;
+package com.simada_backend.repository.alert;
 
 import com.simada_backend.model.psycho.PsychoAlert;
 import org.springframework.data.jpa.repository.*;

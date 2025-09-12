@@ -6,7 +6,7 @@ import com.simada_backend.model.athlete.Athlete;
 import com.simada_backend.model.session.Metrics;
 import com.simada_backend.model.session.Session;
 import com.simada_backend.model.session.TrainingLoadAlert;
-import com.simada_backend.repository.session.TrainingLoadAlertRepository;
+import com.simada_backend.repository.alert.TrainingLoadAlertRepository;
 import com.simada_backend.service.loadCalculator.*;
 import com.simada_backend.repository.athlete.AthleteRepository;
 import com.simada_backend.repository.session.MetricsRepository;

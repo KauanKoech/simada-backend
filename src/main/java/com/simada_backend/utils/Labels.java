@@ -1,4 +1,4 @@
-package com.simada_backend.service.loadCalculator;
+package com.simada_backend.utils;
 
 public final class Labels {
     private Labels() {

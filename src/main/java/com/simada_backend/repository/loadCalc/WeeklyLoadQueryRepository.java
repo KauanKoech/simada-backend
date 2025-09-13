@@ -1,4 +1,4 @@
-package com.simada_backend.service.loadCalculator;
+package com.simada_backend.repository.loadCalc;
 
 import com.simada_backend.model.session.Session;
 import org.springframework.data.jpa.repository.JpaRepository;

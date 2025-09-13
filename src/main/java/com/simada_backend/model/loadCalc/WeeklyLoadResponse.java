@@ -1,4 +1,4 @@
-package com.simada_backend.service.loadCalculator;
+package com.simada_backend.model.loadCalc;
 
 import java.util.List;
 

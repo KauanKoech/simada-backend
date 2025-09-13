@@ -5,6 +5,7 @@ import com.simada_backend.dto.response.TopPerformerDTO;
 import com.simada_backend.dto.response.athlete.AthleteExtraDTO;
 import com.simada_backend.repository.athlete.AthleteExtraRepository;
 import com.simada_backend.repository.coach.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -13,37 +14,24 @@ import java.util.Map;
 import java.util.Objects;
 
 @Service
+@RequiredArgsConstructor
 public class CoachService {
     private final CoachStatsRepository statsRepo;
     private final CoachAthletesRepository coachAthletesRepo;
     private final AthleteExtraRepository athleteExtraRepo;
-
-
-    public CoachService(
-            CoachStatsRepository coachStatsRepository,
-            CoachAthletesRepository coachAthletesRepo,
-            AthleteExtraRepository athleteExtraRepository
-    ) {
-        this.statsRepo = Objects.requireNonNull(coachStatsRepository);
-        this.coachAthletesRepo = Objects.requireNonNull(coachAthletesRepo);
-        this.athleteExtraRepo = Objects.requireNonNull(athleteExtraRepository);
-    }
+    private final RankingRepository rankingRepository;
 
     public List<TopPerformerDTO> getTopPerformers(int limit) {
         int safe = Math.max(1, Math.min(limit, 50));
-//        return repo.findTopPerformers(safe).stream()
-//                .map(r -> new TopPerformerDTO(
-//                        r.getNome_atleta(),
-//                        r.getFoto(),
-//                        r.getData_atualizacao(),
-//                        r.getPontuacao(),
-//                        r.getUltima_pontuacao()
-//                ))
-//                .toList();
-        return List.of(
-                new TopPerformerDTO("João Silva", null, LocalDateTime.now(), 95.0, 90.0),
-                new TopPerformerDTO("Maria Souza", null, LocalDateTime.now(), 88.0, 85.0)
-        );
+        return rankingRepository.findTopPerformers(safe).stream()
+                .map(r -> new TopPerformerDTO(
+                        r.getNome_atleta(),
+                        r.getFoto(),
+                        r.getData_atualizacao(),
+                        r.getPontuacao(),
+                        r.getUltima_pontuacao()
+                ))
+                .toList();
     }
 
     public Map<String, Object> getCoachStats(int coachId) {

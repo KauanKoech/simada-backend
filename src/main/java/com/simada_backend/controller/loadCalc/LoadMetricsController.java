@@ -1,6 +1,9 @@
-package com.simada_backend.service.loadCalculator;
+package com.simada_backend.controller.loadCalc;
 
 
+import com.simada_backend.service.loadCalc.ApiError;
+import com.simada_backend.service.loadCalc.LoadMetricsService;
+import com.simada_backend.model.loadCalc.WeeklyLoadResponse;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

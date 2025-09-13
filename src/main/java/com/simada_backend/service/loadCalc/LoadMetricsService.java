@@ -1,6 +1,10 @@
-package com.simada_backend.service.loadCalculator;
+package com.simada_backend.service.loadCalc;
 
 
+import com.simada_backend.model.loadCalc.WeeklyLoadResponse;
+import com.simada_backend.model.loadCalc.WeeklyLoadRow;
+import com.simada_backend.repository.loadCalc.WeeklyLoadQueryRepository;
+import com.simada_backend.utils.Labels;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;

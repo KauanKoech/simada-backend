@@ -33,4 +33,29 @@ public class Athlete {
 
     @OneToOne(mappedBy = "athlete", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private AthleteExtra extra;
+
+    //    Garante que, ao inserir, se houver user setado e id nulo,
+//    o PK do athlete receba o mesmo id do user.*/
+    @PrePersist
+    private void prePersistSyncIdFromUser() {
+        if (this.id == null && this.user != null) {
+            this.id = this.user.getId();
+        }
+    }
+
+
+//    Na atualização, valida
+//    coerência(opcional, mas recomendado).
+//    Se detectar
+//    divergência entre
+//    ids,
+//    lança erro
+//    claro .*/
+
+    @PreUpdate
+    private void preUpdateValidateIds() {
+        if (this.user != null && this.id != null && !this.id.equals(this.user.getId())) {
+            throw new IllegalStateException("Inconsistência: athlete.id (" + this.id + ") != user.id (" + this.user.getId() + ")");
+        }
+    }
 }

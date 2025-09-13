@@ -21,10 +21,15 @@ public interface AthleteRepository extends JpaRepository<Athlete, Long> {
     // Busca por dorsal
     List<Athlete> findByJerseyNumber(Integer jerseyNumber);
 
-   // Combinar nome + dorsal p/ ser mais específico
+    // Combinar nome + dorsal p/ ser mais específico
     Optional<Athlete> findFirstByNameIgnoreCaseAndJerseyNumber(String name, Integer jerseyNumber);
 
     @Query("SELECT a.user.email FROM Athlete a WHERE a.id = :athleteId")
     Optional<String> findEmailByAthleteId(@Param("athleteId") Long athleteId);
 
+    // principal: identificar atleta por coach + nome (case-insensitive)
+    Optional<Athlete> findByCoach_IdAndNameIgnoreCase(Long coachId, String name);
+
+    // opcional (se “dorsal” for confiável como chave)
+    Optional<Athlete> findByCoach_IdAndJerseyNumber(Long coachId, Integer jerseyNumber);
 }

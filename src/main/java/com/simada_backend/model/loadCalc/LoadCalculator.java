@@ -1,9 +1,7 @@
-package com.simada_backend.service.loadCalculator;
+package com.simada_backend.model.loadCalc;
 
 
 import com.simada_backend.model.session.Metrics;
-
-import java.math.BigDecimal;
 
 public class LoadCalculator {
 

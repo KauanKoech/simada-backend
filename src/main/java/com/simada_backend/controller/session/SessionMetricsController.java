@@ -3,7 +3,7 @@ package com.simada_backend.controller.session;
 import com.simada_backend.dto.request.session.UpdateNotesRequest;
 import com.simada_backend.dto.request.session.UpdateSessionRequest;
 import com.simada_backend.dto.response.SessionDTO;
-import com.simada_backend.service.loadCalculator.CsvParsingException;
+import com.simada_backend.service.loadCalc.CsvParsingException;
 import com.simada_backend.service.session.SessionMetricsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

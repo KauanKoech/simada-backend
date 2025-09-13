@@ -9,6 +9,9 @@ import java.time.Instant;
 @Table(name = "athlete_performance_snapshot")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AthletePerformanceSnapshot {
 
     @Id

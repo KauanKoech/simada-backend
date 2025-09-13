@@ -23,7 +23,6 @@ public class CoachController {
     public List<TopPerformerDTO> topPerformers(
             @RequestParam(name = "limit", defaultValue = "3") int limit
     ) {
-
         return coachService.getTopPerformers(limit);
     }
 

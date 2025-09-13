@@ -8,7 +8,7 @@ import com.simada_backend.integrations.GroqClient;
 import com.simada_backend.repository.recommendation.PerfRecommendationRepository;
 import com.simada_backend.repository.recommendation.PsyRecommendationRepository;
 import com.simada_backend.repository.session.SessionRepository;
-import com.simada_backend.service.loadCalculator.Labels;
+import com.simada_backend.utils.Labels;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

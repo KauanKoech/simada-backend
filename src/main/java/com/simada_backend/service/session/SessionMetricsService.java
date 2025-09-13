@@ -3,14 +3,22 @@ package com.simada_backend.service.session;
 import com.simada_backend.dto.request.session.UpdateSessionRequest;
 import com.simada_backend.dto.response.SessionDTO;
 import com.simada_backend.model.athlete.Athlete;
+import com.simada_backend.model.athlete.AthletePerformanceSnapshot;
+import com.simada_backend.model.loadCalc.LoadCalculator;
+import com.simada_backend.model.loadCalc.LoadSource;
+import com.simada_backend.model.loadCalc.SessionLoad;
 import com.simada_backend.model.session.Metrics;
 import com.simada_backend.model.session.Session;
 import com.simada_backend.model.session.TrainingLoadAlert;
 import com.simada_backend.repository.alert.TrainingLoadAlertRepository;
-import com.simada_backend.service.loadCalculator.*;
+import com.simada_backend.repository.coach.RankingRepository;
+import com.simada_backend.repository.loadCalc.SessionLoadRepo;
+import com.simada_backend.repository.loadCalc.WeeklyLoadQueryRepository;
+import com.simada_backend.service.loadCalc.*;
 import com.simada_backend.repository.athlete.AthleteRepository;
 import com.simada_backend.repository.session.MetricsRepository;
 import com.simada_backend.repository.session.CoachSessionsRepository;
+import com.simada_backend.utils.Labels;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -33,6 +41,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 
+import static com.simada_backend.utils.PerformanceLabelUtils.*;
+
 @Service
 @RequiredArgsConstructor
 public class SessionMetricsService {
@@ -43,7 +53,7 @@ public class SessionMetricsService {
     private final AthleteRepository atletaRepo;
     private final WeeklyLoadQueryRepository weeklyLoadQueryRepository;
     private final TrainingLoadAlertRepository trainingLoadAlertRepository;
-
+    private final RankingRepository rankingRepository;
 
     @Transactional
     public void importMetricsFromCsv(int sessionId, MultipartFile file) throws CsvParsingException {
@@ -73,6 +83,7 @@ public class SessionMetricsService {
                 .setSkipHeaderRecord(true)
                 .setTrim(true)
                 .setIgnoreSurroundingSpaces(true)
+                .setIgnoreEmptyLines(true)
                 .build();
 
         // 4) Faz o parse com cabeçalho
@@ -123,6 +134,7 @@ public class SessionMetricsService {
             int row = 1;
 
             for (CSVRecord rec : parser) {
+                if (isEmptyRecord(rec)) continue;
                 row++;
 
                 String playerName = get(rec, COL_PLAYER);
@@ -227,8 +239,7 @@ public class SessionMetricsService {
                 }
 
                 var rows = weeklyLoadQueryRepository.qwWindow(aid, latest, latest);
-                System.out.println("Rows(" + aid + "," + latest + "): " + rows);
-                System.out.println("Rows: " + rows);
+
                 if (rows == null || rows.isEmpty()) continue;
 
                 var r = rows.get(rows.size() - 1);
@@ -274,22 +285,41 @@ public class SessionMetricsService {
 
                         .build();
                 trainingLoadAlertRepository.save(alert);
+
+                int rawPoints =
+                        scoreAcwr(acwrL) + scorePctQwUp(pctQwUpL) + scoreMonotony(monoL) + scoreStrain(strainL);
+
+                int points = Math.max(0, rawPoints);
+
+                var snap = new AthletePerformanceSnapshot(); // ou .builder()
+                snap.setAsOf(Instant.now());
+                snap.setAthleteId(aid);
+                snap.setCoachId(coachIdLong != null ? coachIdLong : 0L);
+                snap.setPoints(points);
+                snap.setPosition(0);
+                rankingRepository.save(snap);
             }
+            if (coachIdLong != null) {
+                var latestByCoach = rankingRepository.findCoachLatestSnapshots(coachIdLong);
+
+                latestByCoach.sort((s1, s2) -> {
+                    int byPoints = Integer.compare(s2.getPoints(), s1.getPoints());
+                    if (byPoints != 0) return byPoints;
+                    int byAsOf = s2.getAsOf().compareTo(s1.getAsOf());
+                    if (byAsOf != 0) return byAsOf;
+                    return Long.compare(s1.getAthleteId(), s2.getAthleteId());
+                });
+
+                int pos = 1;
+                for (var s : latestByCoach) {
+                    s.setPosition(pos++);
+                }
+                rankingRepository.saveAll(latestByCoach);
+            }
+
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Erro ao processar CSV", e);
         }
-    }
-
-    private static Double toDouble(BigDecimal bd) {
-        return bd != null ? bd.doubleValue() : null;
-    }
-
-    private static boolean isAttentionOrRisk(String label) {
-        if (label == null) return false;
-        return switch (label) {
-            case "atenção", "risco", "alto_risco" -> true;
-            default -> false;
-        };
     }
 
     @Transactional
@@ -356,6 +386,18 @@ public class SessionMetricsService {
 
     /* ------------ helpers ------------- */
 
+    private static Double toDouble(BigDecimal bd) {
+        return bd != null ? bd.doubleValue() : null;
+    }
+
+    private static boolean isAttentionOrRisk(String label) {
+        if (label == null) return false;
+        return switch (label) {
+            case "atenção", "risco", "alto_risco" -> true;
+            default -> false;
+        };
+    }
+
     private static String get(CSVRecord r, String col) {
         if (col == null) return null;
         String v = r.get(col);
@@ -417,6 +459,13 @@ public class SessionMetricsService {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private static boolean isEmptyRecord(CSVRecord rec) {
+        for (String v : rec) {
+            if (v != null && !v.trim().isEmpty()) return false;
+        }
+        return true;
     }
 
     private static final DateTimeFormatter[] DATE_PATTERNS = new DateTimeFormatter[]{

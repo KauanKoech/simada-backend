@@ -24,7 +24,6 @@ public class LoadMetricsController {
         this.service = service;
     }
 
-    // JSON
     @GetMapping("/risk-calculations")
     public WeeklyLoadResponse qw(
             @PathVariable Long athleteId,

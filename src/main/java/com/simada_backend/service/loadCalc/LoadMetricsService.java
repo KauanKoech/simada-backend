@@ -5,7 +5,9 @@ import com.simada_backend.model.loadCalc.WeeklyLoadResponse;
 import com.simada_backend.model.loadCalc.WeeklyLoadRow;
 import com.simada_backend.repository.loadCalc.WeeklyLoadQueryRepository;
 import com.simada_backend.utils.Labels;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -39,19 +41,21 @@ public class LoadMetricsService {
     }
 
     public WeeklyLoadResponse qwSma4(Long athleteId, LocalDate from, LocalDate to, Set<String> metrics) {
-        LocalDate fromQw = normalizeToQwStart(from);
-        LocalDate toQw = normalizeToQwStart(to);
+//        LocalDate fromQw = normalizeToQwStart(from);
+//        LocalDate toQw = normalizeToQwStart(to);
 
-        int havePrev = repo.countPreviousQuads(athleteId, fromQw);
-        if (metrics.contains("acwr") && havePrev < 4) {
-            throw new InsufficientHistoryException(
-                    new ApiError("INSUFFICIENT_HISTORY", "ACWR",
-                            "Need at least 4 previous quad-weeks for CC (SMA-4).",
-                            4, havePrev)
-            );
+        if (from.isAfter(to)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "'from' must be before or equal to 'to'");
         }
 
-        var rowsDb = repo.qwWindow(athleteId, fromQw, toQw);
+        if (metrics.contains("acwr")) {
+            int havePrevAtEnd = repo.countPreviousQuads(athleteId, to);
+            if (havePrevAtEnd < 4) {
+
+            }
+        }
+
+        var rowsDb = repo.qwWindow(athleteId, from, to);
         List<WeeklyLoadRow> rows = new ArrayList<>();
 
         for (var r : rowsDb) {
@@ -76,6 +80,11 @@ public class LoadMetricsService {
                 }
             }
 
+            // (Opcional) Se ACWR veio null, sinalize também:
+            if (metrics.contains("acwr") && acwr == null) {
+                warnings.add("acwr_unavailable_history_lt4");
+            }
+
             rows.add(new WeeklyLoadRow(
                     r.getAthleteId(),
                     r.getQwStart(),
@@ -96,11 +105,12 @@ public class LoadMetricsService {
         return new WeeklyLoadResponse("sma4_qw", rows);
     }
 
-    private static LocalDate normalizeToQwStart(LocalDate d) {
-        int day = d.getDayOfMonth();
-        int startDay = (day <= 7) ? 1 : (day <= 14) ? 8 : (day <= 21) ? 15 : 22;
-        return LocalDate.of(d.getYear(), d.getMonth(), startDay);
-    }
+
+//    private static LocalDate normalizeToQwStart(LocalDate d) {
+//        int day = d.getDayOfMonth();
+//        int startDay = (day <= 7) ? 1 : (day <= 14) ? 8 : (day <= 21) ? 15 : 22;
+//        return LocalDate.of(d.getYear(), d.getMonth(), startDay);
+//    }
 
     private static Double toDouble(BigDecimal v) {
         return v == null ? null : v.doubleValue();

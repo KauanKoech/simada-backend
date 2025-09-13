@@ -12,7 +12,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 @RestController
-@RequestMapping("/athletes/{athleteId}")
+@RequestMapping("/api/coach/athletes/{athleteId}")
 public class LoadMetricsController {
 
     private final LoadMetricsService service;
@@ -22,7 +22,7 @@ public class LoadMetricsController {
     }
 
     // JSON
-    @GetMapping("/loads/qw")
+    @GetMapping("/risk-calculations")
     public WeeklyLoadResponse qw(
             @PathVariable Long athleteId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,

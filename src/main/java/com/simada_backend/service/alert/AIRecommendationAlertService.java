@@ -115,30 +115,27 @@ public class AIRecommendationAlertService {
 
         String perfSystemPrompt = """
                 You are a sports performance assistant. Generate concise, clear, and actionable recommendations
-                focused on TRAINING LOAD MANAGEMENT using four indices:
+                for TRAINING LOAD MANAGEMENT, organized BY METRIC. The four metrics are:
                 - ACWR (acute:chronic workload ratio)
                 - Weekly Load Change (%%↑QW vs previous week)
                 - Monotony (Foster)
                 - Strain (Foster)
                 
-                Rules:
-                - Output format: markdown with 3–7 concise bullets (each 1–2 sentences).
+                Output rules:
+                - Markdown, with one subsection per metric that is present:
+                  - "### ACWR", "### Weekly Load Change (%%↑QW)", "### Monotony", "### Strain"
+                  - Under each subsection: 2–3 bullets (1–2 sentences each) tailored to that metric's value/label.
                 - Language: English, pragmatic and empathetic tone.
-                - Do not make medical diagnoses; focus on training load adjustments, recovery hygiene, and monitoring.
-                - Always tailor advice to the combination of indices (not just one metric in isolation).
-                - Prefer specific actions coaches/athletes can take next session and next week.
-                - IMPORTANT: End with this final line:
-                  "⚠️ Please seek professional medical support if symptoms persist or worsen."
+                - Focus on concrete next-session and next-week actions (load adjustments, distribution, recovery hygiene, monitoring).
+                - Do not make medical diagnoses.
+                - IMPORTANT: Always end with this final line:
+                  "Please seek professional medical support if symptoms persist or worsen."
                 
-                Guidelines to interpret indices (do not restate them verbatim; just use them to guide advice):
-                - ACWR:
-                  <0.8 = low; 0.8–1.3 = optimal; 1.3–1.5 = caution; >1.5 = risk.
-                - Weekly Load Change (%%↑QW):
-                  < -10%% = large drop; -10%%–10%% = stable; 10%%–20%% = caution; >20%% = risk.
-                - Monotony:
-                  <1.0 = healthy; 1.0–2.0 = caution; >2.0 = high risk.
-                - Strain:
-                  <6000 = low; 6000–8000 = caution; >8000 = high risk.
+                Labels guide (use only to guide advice, do not restate thresholds):
+                - ACWR labels: baixo, ótimo, atenção, risco.
+                - %%↑QW labels: queda_forte, estável, atenção, risco.
+                - Monotony labels: saudável, atenção, alto_risco.
+                - Strain labels: baixo, atenção, alto_risco.
                 """;
 
 
@@ -147,17 +144,16 @@ public class AIRecommendationAlertService {
                 - sessionId: %d
                 - athleteId: %d
                 
-                Training load indices:
+                Metrics (value + label):
                 - ACWR: %s (%s)
                 - Weekly Load Change (%%↑QW): %s%% (%s)
                 - Monotony: %s (%s)
                 - Strain: %s (%s)
                 
                 Expected output:
-                - Markdown list of 3–7 practical bullets (1–2 sentences each) with next-session and next-week actions.
-                - Consider combinations (e.g., high ACWR + high monotony → stronger deload and distribution).
-                - The last line must always be:
-                  "⚠️ Please seek professional medical support if symptoms persist or worsen."
+                - Markdown sections: "### ACWR", "### Weekly Load Change (%%↑QW)", "### Monotony", "### Strain".
+                - For each present metric: 2–3 concise bullets with practical actions (next session & next week).
+                - End with: "⚠️ Please seek professional medical support if symptoms persist or worsen."
                 """.formatted(
                 sessionId,
                 athleteId,
@@ -293,32 +289,105 @@ public class AIRecommendationAlertService {
         String strainL = Labels.strainLabel(strainD);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("**Recommendations (fallback):**\n");
+        sb.append("**Recommendations (fallback):**\n\n");
 
-        if ("risco".equals(acwrL) || "atenção".equals(acwrL)) {
-            sb.append("- Adjust **next-week load**: reduce overall volume by 10–20% and cap high-intensity exposures; prefer distributed sessions over single peaks.\n");
-        } else if ("baixo".equals(acwrL)) {
-            sb.append("- Gradually **reintroduce load** (+5–10% next week) to move toward the optimal ACWR zone while monitoring responses.\n");
-        }
-        if ("risco".equals(pctL) || "atenção".equals(pctL)) {
-            sb.append("- Keep weekly change within **±10%**: trim extras (conditioning blocks, small-sided games) and add one **easy/recovery day**.\n");
-        } else if ("queda_forte".equals(pctL)) {
-            sb.append("- After a large drop, **progressively rebuild** with controlled increments (<10%) and maintain technical quality.\n");
-        }
-        if ("alto_risco".equals(monoL) || "atenção".equals(monoL)) {
-            sb.append("- Reduce **monotony**: vary session focus (volume/intensity), insert a **rest/low day**, and diversify drills across the week.\n");
+        // ACWR
+        if (r.acwr() != null) {
+            sb.append("### ACWR\n");
+            switch (acwrL) {
+                case "risco" -> {
+                    sb.append("- Reduce **next-week volume by 10–20%**, cap high-intensity exposures, and avoid single-session load peaks.\n");
+                    sb.append("- Distribute intensity more evenly across the week; consider an **easy/recovery day**.\n");
+                }
+                case "atenção" -> {
+                    sb.append("- Keep **weekly increments <10%** and avoid adding extra conditioning blocks this week.\n");
+                    sb.append("- Monitor daily wellness/RPE and schedule one **lower-load session** to buffer accumulation.\n");
+                }
+                case "baixo" -> {
+                    sb.append("- **Rebuild gradually**: increase total load by 5–10% next week with emphasis on technical quality.\n");
+                    sb.append("- Maintain at least one **moderate session** to progress toward the optimal range.\n");
+                }
+                default /* ótimo / indisponível */ -> {
+                    sb.append("- Maintain **stable progression** (<10%); keep balanced intensity distribution.\n");
+                    sb.append("- Continue daily recovery hygiene (sleep, hydration) and standard monitoring.\n");
+                }
+            }
+            sb.append("\n");
         }
 
-        if ("alto_risco".equals(strainL) || "atenção".equals(strainL)) {
-            sb.append("- Manage **strain**: shorten sets, lower density, and extend **recovery windows** (sleep, hydration, mobility, cold/warm strategies as tolerated).\n");
+        // %↑QW
+        if (r.pctQwUp() != null) {
+            sb.append("### Weekly Load Change (%%↑QW)\n");
+            switch (pctL) {
+                case "risco" -> {
+                    sb.append("- Pull **weekly change back to ±10%**: remove optional extras and add one **easy/recovery day**.\n");
+                    sb.append("- Limit sharp spikes (e.g., back-to-back high-intensity days); split workloads.\n");
+                }
+                case "atenção" -> {
+                    sb.append("- Keep increments **≤10%** and watch post-session responses; avoid stacking intense drills.\n");
+                    sb.append("- If fatigue signs appear, trim session duration slightly or extend rest intervals.\n");
+                }
+                case "queda_forte" -> {
+                    sb.append("- **Progressively rebuild** after the drop: add 5–10% with quality work and appropriate rest.\n");
+                    sb.append("- Keep intensity controlled; prioritize consistency over single hard sessions.\n");
+                }
+                default /* estável / indisponível */ -> {
+                    sb.append("- Preserve **stable weekly change (±10%)** and track how athletes tolerate the plan.\n");
+                    sb.append("- Small technical exposures are fine; avoid unnecessary spikes.\n");
+                }
+            }
+            sb.append("\n");
         }
+
+        // Monotony
+        if (r.monotony() != null) {
+            sb.append("### Monotony\n");
+            switch (monoL) {
+                case "alto_risco" -> {
+                    sb.append("- Reduce **monotony**: vary session focus (volume/intensity), insert a **rest/low day** this week.\n");
+                    sb.append("- Diversify drills (e.g., technical vs. conditioning) to avoid repetitive stress.\n");
+                }
+                case "atenção" -> {
+                    sb.append("- Introduce **variation** in intensity zones and drill selection within the week.\n");
+                    sb.append("- Avoid identical back-to-back sessions; tweak density and duration.\n");
+                }
+                default /* saudável / indisponível */ -> {
+                    sb.append("- Keep **varied distribution** through the week to maintain healthy monotony.\n");
+                    sb.append("- Continue alternating stimulus (neuromuscular, metabolic, technical).\n");
+                }
+            }
+            sb.append("\n");
+        }
+
+        // Strain
+        if (r.strain() != null) {
+            sb.append("### Strain\n");
+            switch (strainL) {
+                case "alto_risco" -> {
+                    sb.append("- Manage **strain**: shorten sets, lower density, extend recovery windows; consider active recovery.\n");
+                    sb.append("- De-emphasize high-impact drills for 2–3 days and reassess readiness.\n");
+                }
+                case "atenção" -> {
+                    sb.append("- Slightly reduce session density or total volume; add mobility and recovery practices.\n");
+                    sb.append("- Monitor next-day freshness; avoid pairing intense sessions consecutively.\n");
+                }
+                default /* baixo / indisponível */ -> {
+                    sb.append("- Maintain appropriate load; small progressions are acceptable if other metrics are controlled.\n");
+                    sb.append("- Keep standard recovery hygiene and monitoring routine.\n");
+                }
+            }
+            sb.append("\n");
+        }
+
+        // Combinações críticas (opcional, mantém uma regra combinada no final)
         boolean highACWR = "risco".equals(acwrL);
         boolean highMono = "alto_risco".equals(monoL);
         boolean highStr = "alto_risco".equals(strainL);
-        if ((highACWR && highMono) || (highACWR && highStr) || (highMono && highStr)) {
-            sb.append("- Apply a short **deload** (3–5 days) and monitor **daily** (wellness/RPE); only reintroduce intensity once symptoms and indices normalize.\n");
+        if ((r.acwr() != null || r.monotony() != null || r.strain() != null) && ((highACWR && highMono) || (highACWR && highStr) || (highMono && highStr))) {
+            sb.append("- **Combination note**: apply a short **deload** (3–5 days) and monitor **daily** (wellness/RPE); reintroduce intensity only once indices normalize.\n\n");
         }
-        sb.append("\n⚠️ Please seek professional medical support if symptoms persist or worsen.\n");
+
+        sb.append("Please seek professional medical support if symptoms persist or worsen.\n");
         return sb.toString();
     }
 

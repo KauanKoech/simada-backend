@@ -72,26 +72,26 @@ public class AthleteService {
     public MatchInfo getRecent(Long athleteId) {
         LocalDate today = LocalDate.now(ZONE);
         var row = athleteHomeRepo.findRecentGameForAthlete(athleteId, today);
-        if (row == null) return new MatchInfo(null, "No recent game", null);
+        if (row == null) return new MatchInfo(null,null, "No recent game", null);
 
         ZonedDateTime zdt = row.date().atStartOfDay(ZONE);
         String iso = ISO.format(zdt);
         String title = row.title() != null ? row.title() : "Game";
         String subtitle = row.opponent() != null ? "vs " + row.opponent() : null;
-        return new MatchInfo(iso, title, subtitle);
+        return new MatchInfo(row.id(), iso, title, subtitle);
     }
 
     public MatchInfo getNextMatch(Long athleteId) {
         LocalDate today = LocalDate.now(ZONE);
         var row = athleteHomeRepo.findNextGameForAthlete(athleteId, today);
-        if (row == null) return new MatchInfo(null, "No upcoming game", null);
+        if (row == null) return new MatchInfo(null, null, "No upcoming game", null);
 
         ZonedDateTime zdt = row.date().atStartOfDay(ZONE);
         String iso = ISO.format(zdt);
         String title = row.title() != null ? row.title() : "Game";
         String subtitle = row.opponent() != null ? "vs " + row.opponent() : null;
 
-        return new MatchInfo(iso, title, subtitle);
+        return new MatchInfo(row.id(), iso, title, subtitle);
     }
 
     public List<CalendarEvent> getCalendar(Long athleteId, int year, int month) {

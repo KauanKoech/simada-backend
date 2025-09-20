@@ -1,24 +1,30 @@
 package com.simada_backend.model.loadCalc;
 
+import com.simada_backend.model.athlete.Athlete;
+import com.simada_backend.model.session.Session;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "session_loads")
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
 public class SessionLoad {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "session_id", nullable = false)
-    private Long sessionId;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "session_id", nullable = false)
+    private Session session;
 
-    @Column(name = "athlete_id", nullable = false)
-    private Long athleteId;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "athlete_id", nullable = false)
+    private Athlete athlete;
 
     @Column(name = "load_srpe")
     private Double loadSrpe;
@@ -30,7 +36,7 @@ public class SessionLoad {
     private Double loadEffective;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "load_source", nullable = false)
+    @Column(name = "load_source", nullable = false, length = 20)
     private LoadSource loadSource;
 
     @Column(name = "formula_version", nullable = false, length = 20)
@@ -38,8 +44,4 @@ public class SessionLoad {
 
     @Column(name = "params_json", columnDefinition = "json")
     private String paramsJson;
-
-    public SessionLoad() {
-    }
 }
-

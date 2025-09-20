@@ -1,7 +1,10 @@
 package com.simada_backend.service.session;
 
+import com.simada_backend.api.error.BusinessException;
+import com.simada_backend.api.error.ErrorCode;
 import com.simada_backend.dto.request.session.UpdateSessionRequest;
 import com.simada_backend.dto.response.SessionDTO;
+import com.simada_backend.model.Coach;
 import com.simada_backend.model.athlete.Athlete;
 import com.simada_backend.model.athlete.AthletePerformanceSnapshot;
 import com.simada_backend.model.loadCalc.LoadCalculator;
@@ -11,6 +14,7 @@ import com.simada_backend.model.session.Metrics;
 import com.simada_backend.model.session.Session;
 import com.simada_backend.model.session.TrainingLoadAlert;
 import com.simada_backend.repository.alert.TrainingLoadAlertRepository;
+import com.simada_backend.repository.coach.CoachRepository;
 import com.simada_backend.repository.coach.RankingRepository;
 import com.simada_backend.repository.loadCalc.SessionLoadRepo;
 import com.simada_backend.repository.loadCalc.WeeklyLoadQueryRepository;
@@ -51,31 +55,35 @@ public class SessionMetricsService {
     private final CoachSessionsRepository sessionsRepo;
     private final MetricsRepository metricasRepo;
     private final AthleteRepository atletaRepo;
+    private final CoachRepository coachRepo;
     private final WeeklyLoadQueryRepository weeklyLoadQueryRepository;
     private final TrainingLoadAlertRepository trainingLoadAlertRepository;
     private final RankingRepository rankingRepository;
 
     @Transactional
     public void importMetricsFromCsv(int sessionId, MultipartFile file) throws CsvParsingException {
-        // 1) Carrega a sessão
+        // 1) Load session
         Session session = sessionsRepo.findById(sessionId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sessão não encontrada"));
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Session not found."
+                ));
 
-        Long coachId = session.getCoach().getId();
+        Coach sessionCoach = session.getCoach();
+        Long coachId = (sessionCoach != null ? sessionCoach.getId() : null);
 
-        // 2) Lê todo o arquivo em memória (simples e prático; p/ arquivos muito grandes, stream por linhas)
+        // 2) Read all file
         final String content;
         try (InputStream in = file.getInputStream()) {
             content = new String(in.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Falha ao ler arquivo", e);
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, HttpStatus.BAD_REQUEST, "Failed reading file.");
         }
 
         if (content.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Arquivo vazio");
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, HttpStatus.BAD_REQUEST, "Empty file.");
         }
 
-        // 3) Detecta delimitador
+        // 3) Detect delimiter
         char delimiter = detectDelimiter(firstNonEmptyLine(content));
         CSVFormat format = CSVFormat.DEFAULT.builder()
                 .setDelimiter(delimiter)
@@ -86,14 +94,18 @@ public class SessionMetricsService {
                 .setIgnoreEmptyLines(true)
                 .build();
 
-        // 4) Faz o parse com cabeçalho
+        // Cache para evitar re-buscar entidades Athlete
+        Map<Long, Athlete> athleteCache = new HashMap<>();
+
+        Map<Long, Integer> importCountByAthlete = new HashMap<>();
+
         try (CSVParser parser = CSVParser.parse(content, format)) {
             Map<String, Integer> hdr = parser.getHeaderMap();
             if (hdr == null || hdr.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cabeçalho não encontrado no CSV");
+                throw new BusinessException(ErrorCode.VALIDATION_ERROR, HttpStatus.BAD_REQUEST, "Header not found on CSV.");
             }
 
-            // Mapeia nomes de colunas (aceita PT/EN)
+            // Map columns (PT/EN)
             String COL_PLAYER = pick(hdr, "player", "jogador", "atleta", "nome", "full_name");
             String COL_DORSAL = pick(hdr, "dorsal", "shirt_number", "numero_camisa", "camisa");
             String COL_TIME = pick(hdr, "time", "tempo", "minutos");
@@ -125,9 +137,9 @@ public class SessionMetricsService {
             String COL_TVR4 = pick(hdr, "time_vrange4", "tempo_v4");
             String COL_RPE = pick(hdr, "rpe", "esforco");
 
-            // Essas duas são obrigatórias
-            if (COL_PLAYER == null)
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Coluna 'player' (nome do atleta) não encontrada");
+            if (COL_PLAYER == null) {
+                throw new BusinessException(ErrorCode.VALIDATION_ERROR, HttpStatus.BAD_REQUEST, "Column 'player' not found.");
+            }
 
             List<Metrics> batch = new ArrayList<>();
             Set<Long> distinctAthleteIds = new HashSet<>();
@@ -141,27 +153,29 @@ public class SessionMetricsService {
                 Integer dorsal = tryParseInt(get(rec, COL_DORSAL));
 
                 if (playerName == null || playerName.isBlank()) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Linha " + row + ": 'player' vazio");
+                    throw new BusinessException(ErrorCode.VALIDATION_ERROR, HttpStatus.BAD_REQUEST,
+                            "Line " + row + ": 'player' is empty.");
                 }
 
-                //Resolve atleta (repo -> por nome+dorsal, nome, dorsal)
+                // Resolve athlete (repo -> by name+dorsal, name, dorsal)
                 Athlete athlete = resolveAtletaRepo(playerName, dorsal);
                 if (athlete == null) {
-                    throw new ResponseStatusException(
-                            HttpStatus.BAD_REQUEST,
-                            "Linha " + row + ": atleta '" + playerName +
-                                    "' (camisa " + (dorsal != null ? dorsal : "?") + ") não encontrado no banco de dados"
-                    );
+                    throw new BusinessException(ErrorCode.VALIDATION_ERROR, HttpStatus.BAD_REQUEST,
+                            "Line " + row + ": athlete '" + playerName +
+                                    "' (jersey number " + (dorsal != null ? dorsal : "?") + ") not found in database.");
                 }
 
-                // Garante que o atleta pertence ao mesmo treinador da sessão
+                // Ensure athlete belongs to the coach of the session
                 if (athlete.getCoach() == null || !Objects.equals(athlete.getCoach().getId(), coachId)) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                            "Linha " + row + ": atleta '" + playerName +
-                                    "' não pertence ao treinador da sessão (id=" + coachId + ")");
+                    throw new BusinessException(ErrorCode.VALIDATION_ERROR, HttpStatus.BAD_REQUEST,
+                            "Line " + row + ": athlete '" + playerName +
+                                    "' does not belong to the session's coach (id=" + coachId + ").");
                 }
 
-                // 6) Monta a entidade Métricas
+                // cache
+                athleteCache.putIfAbsent(athlete.getId(), athlete);
+
+                // Build Metrics
                 Metrics m = new Metrics();
                 m.setSession(session);
                 m.setAthlete(athlete);
@@ -208,8 +222,8 @@ public class SessionMetricsService {
                         .findBySessionIdAndAthleteId(sessionIdLong, athleteIdLong)
                         .orElseGet(SessionLoad::new);
 
-                load.setSessionId(sessionIdLong);
-                load.setAthleteId(athleteIdLong);
+                load.setSession(session);
+                load.setAthlete(athlete);
                 load.setLoadSrpe(calc.loadSrpe);
                 load.setLoadPlSim(calc.loadPlSim);
                 load.setLoadEffective(calc.loadEffective);
@@ -218,33 +232,37 @@ public class SessionMetricsService {
                 load.setParamsJson(calc.paramsJson);
                 sessionLoadRepo.save(load);
 
+                int newCount = importCountByAthlete.merge(athleteIdLong, 1, Integer::sum);
+                if (newCount % 2 == 0) {
+                    trainingLoadAlertRepository
+                            .findFirstByAthlete_IdOrderByCreatedAtDesc(athleteIdLong)
+                            .ifPresent(trainingLoadAlertRepository::delete);
+                }
             }
 
-            // Persiste tudo
+            // Persist all metrics
             metricasRepo.saveAll(batch);
 
-            //Atualiza num_atletas na sessão
+            // Update session num_athletes
             session.setNumAthletes(distinctAthleteIds.size());
             sessionsRepo.save(session);
 
             final Long sessionIdLong = session.getId() == null ? null : session.getId().longValue();
-            final Long coachIdLong = (session.getCoach() != null ? session.getCoach().getId() : null);
+            final Long coachIdLong = (sessionCoach != null ? sessionCoach.getId() : null);
 
-            System.out.println("Distict Athletes: " + distinctAthleteIds.size());
             for (Long aid : distinctAthleteIds) {
                 LocalDate latest = weeklyLoadQueryRepository.findLatestQwStart(aid);
                 if (latest == null) {
-                    System.out.println("Sem histórico na view para athleteId=" + aid);
+                    System.out.println("No history view for athleteId=" + aid);
                     continue;
                 }
 
                 var rows = weeklyLoadQueryRepository.qwWindow(aid, latest, latest);
-
                 if (rows == null || rows.isEmpty()) continue;
 
                 var r = rows.get(rows.size() - 1);
 
-                // Classificar
+                // Classify
                 String acwrL = Labels.acwrLabel(toDouble(r.getAcwr()));
                 String pctQwUpL = Labels.pctQwUpLabel(toDouble(r.getPctQwUp()));
                 String monoL = Labels.monotonyLabel(toDouble(r.getMonotony()));
@@ -258,56 +276,71 @@ public class SessionMetricsService {
 
                 if (!hasAlert) continue;
 
-                // Evita duplicar alerta do mesmo atleta na mesma sessão
+                // Avoid duplicate alert for the same athlete in this session
                 boolean exists = trainingLoadAlertRepository
                         .findByAthleteIdAndSessionId(aid, sessionIdLong)
                         .isPresent();
                 if (exists) continue;
 
-                var alert = TrainingLoadAlert.builder()
-                        .athleteId(aid)
-                        .coachId(coachIdLong != null ? coachIdLong : 0L)
-                        .sessionId(sessionIdLong != null ? sessionIdLong : 0L)
-                        .qwStart(r.getQwStart())
+                Athlete athlete = atletaRepo.findById(aid)
+                        .orElseThrow(() -> new BusinessException(
+                                ErrorCode.RESOURCE_NOT_FOUND,
+                                HttpStatus.NOT_FOUND,
+                                "Athlete not found."
+                        ));
+                Coach coach = coachRepo.findById(coachId)
+                        .orElseThrow(() -> new BusinessException(
+                                ErrorCode.RESOURCE_NOT_FOUND,
+                                HttpStatus.NOT_FOUND,
+                                "Athlete not found."
+                        ));
 
+                var alert = TrainingLoadAlert.builder()
+                        .athlete(athlete)
+                        .coach(coach)
+                        .session(session)
+                        .qwStart(r.getQwStart())
                         .acwr(toDouble(r.getAcwr()))
                         .acwrLabel(acwrL)
-
                         .pctQwUp(toDouble(r.getPctQwUp()))
                         .pctQwUpLabel(pctQwUpL)
-
                         .monotony(toDouble(r.getMonotony()))
                         .monotonyLabel(monoL)
-
                         .strain(toDouble(r.getStrain()))
                         .strainLabel(strainL)
                         .createdAt(Instant.now())
-
                         .build();
                 trainingLoadAlertRepository.save(alert);
 
                 int rawPoints =
                         scoreAcwr(acwrL) + scorePctQwUp(pctQwUpL) + scoreMonotony(monoL) + scoreStrain(strainL);
-
                 int points = Math.max(0, rawPoints);
 
-                var snap = new AthletePerformanceSnapshot(); // ou .builder()
+                Athlete athleteEntity = athleteCache.computeIfAbsent(aid, id ->
+                        atletaRepo.findById(id).orElseThrow(() ->
+                                new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Athlete not found.")));
+
+                var snap = new AthletePerformanceSnapshot();
                 snap.setAsOf(Instant.now());
-                snap.setAthleteId(aid);
-                snap.setCoachId(coachIdLong != null ? coachIdLong : 0L);
+                snap.setAthlete(athleteEntity);
+                snap.setCoach(sessionCoach);
                 snap.setPoints(points);
                 snap.setPosition(0);
                 rankingRepository.save(snap);
             }
+
             if (coachIdLong != null) {
                 var latestByCoach = rankingRepository.findCoachLatestSnapshots(coachIdLong);
 
+                // Ajuste do sort: agora acessa IDs via entidades
                 latestByCoach.sort((s1, s2) -> {
                     int byPoints = Integer.compare(s2.getPoints(), s1.getPoints());
                     if (byPoints != 0) return byPoints;
                     int byAsOf = s2.getAsOf().compareTo(s1.getAsOf());
                     if (byAsOf != 0) return byAsOf;
-                    return Long.compare(s1.getAthleteId(), s2.getAthleteId());
+                    Long a1 = (s1.getAthlete() != null ? s1.getAthlete().getId() : 0L);
+                    Long a2 = (s2.getAthlete() != null ? s2.getAthlete().getId() : 0L);
+                    return Long.compare(a1, a2);
                 });
 
                 int pos = 1;
@@ -318,9 +351,10 @@ public class SessionMetricsService {
             }
 
         } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Erro ao processar CSV", e);
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, HttpStatus.BAD_REQUEST, "Error processing CSV.");
         }
     }
+
 
     @Transactional
     public void updateSessionNotes(int sessionId, String description) {
@@ -328,14 +362,22 @@ public class SessionMetricsService {
             description = "";
         }
         Session s = sessionsRepo.findById(sessionId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sessão não encontrada"));
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        HttpStatus.NOT_FOUND,
+                        "Session not found."
+                ));
         s.setDescription(description);
     }
 
     @Transactional
     public SessionDTO updateSession(int id, UpdateSessionRequest req) {
         Session s = sessionsRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sessão não encontrada"));
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        HttpStatus.NOT_FOUND,
+                        "Session not found."
+                ));
 
         // type: "Training" | "Game"  -> BD: "treino" | "jogo"
         if (req.type() != null && !req.type().isBlank()) {
@@ -346,7 +388,11 @@ public class SessionMetricsService {
         if (req.title() != null) {
             String t = req.title().trim();
             if (t.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "title não pode ser vazio");
+                throw new BusinessException(
+                        ErrorCode.VALIDATION_ERROR,
+                        HttpStatus.BAD_REQUEST,
+                        "Title can't be empty"
+                );
             }
             s.setTitle(t);
         }

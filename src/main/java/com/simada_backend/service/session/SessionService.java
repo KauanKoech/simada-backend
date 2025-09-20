@@ -60,13 +60,13 @@ public class SessionService {
     @Transactional
     public void registerSession(RegisterSessionRequest req) {
         Coach coach = coachRepo.findByIdWithUser(req.getCoachId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Treinador não encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Coach not found"));
 
         LocalDate date;
         try {
             date = LocalDate.parse(req.getDate());
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato inválido para 'date' (use YYYY-MM-DD)");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid 'date' format (use YYYY-MM-DD)");
         }
 
         String coachPhoto = (coach.getUser() != null) ? coach.getUser().getPhoto() : null;

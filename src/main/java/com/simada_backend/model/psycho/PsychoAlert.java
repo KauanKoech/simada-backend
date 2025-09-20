@@ -1,5 +1,8 @@
 package com.simada_backend.model.psycho;
 
+import com.simada_backend.model.Coach;
+import com.simada_backend.model.athlete.Athlete;
+import com.simada_backend.model.session.Session;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,17 +28,22 @@ public class PsychoAlert {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "coach_id", nullable = false)
-    private Long coachId;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "coach_id", nullable = false)
+    private Coach coach;
 
-    @Column(name = "athlete_id", nullable = false)
-    private Long athleteId;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "athlete_id", nullable = false)
+    private Athlete athlete;
 
-    @Column(name = "session_id", nullable = false)
-    private Long sessionId;
+    // Session (N:1)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "session_id", nullable = false)
+    private Session session;
 
-    @Column(name = "answer_id", nullable = false)
-    private Long answerId;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "answer_id", nullable = false)
+    private PsychoFormAnswer answer;
 
     @Column(name = "rule_code", nullable = false, length = 64)
     private String ruleCode;

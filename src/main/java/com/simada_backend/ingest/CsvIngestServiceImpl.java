@@ -199,8 +199,8 @@ public class CsvIngestServiceImpl implements CsvIngestService {
                     SessionLoad load = sessionLoadRepo.findBySessionIdAndAthleteId(session.getId(), athlete.getId())
                             .orElseGet(SessionLoad::new);
 
-                    load.setSessionId(session.getId());
-                    load.setAthleteId(athlete.getId());
+                    load.setSession(session);
+                    load.setAthlete(athlete);
                     load.setLoadSrpe(calc.loadSrpe);
                     load.setLoadPlSim(calc.loadPlSim);
                     load.setLoadEffective(calc.loadEffective);

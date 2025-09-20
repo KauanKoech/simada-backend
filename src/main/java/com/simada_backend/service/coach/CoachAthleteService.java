@@ -1,5 +1,7 @@
 package com.simada_backend.service.coach;
 
+import com.simada_backend.api.error.BusinessException;
+import com.simada_backend.api.error.ErrorCode;
 import com.simada_backend.dto.request.athlete.UpdateAthleteRequest;
 import com.simada_backend.dto.response.athlete.AthleteDetailDTO;
 import com.simada_backend.dto.response.athlete.AthleteExtraDTO;
@@ -30,7 +32,11 @@ public class CoachAthleteService {
     @Transactional
     public AthleteDetailDTO getAthlete(Long coachId, Long athleteId) {
         Athlete athlete = atletaRepo.findByIdAndCoach_Id(athleteId, coachId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Atleta não encontrado para este treinador"));
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        HttpStatus.NOT_FOUND,
+                        "Athlete not found."
+                ));
 
         User u = athlete.getUser();
         AthleteExtra ex = athlete.getExtra();
@@ -54,7 +60,11 @@ public class CoachAthleteService {
     @Transactional
     public AthleteDetailDTO updateAthlete(Long coachId, Long athleteId, UpdateAthleteRequest req) {
         Athlete athlete = atletaRepo.findByIdAndCoach_Id(athleteId, coachId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Atleta não encontrado para este treinador"));
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        HttpStatus.NOT_FOUND,
+                        "Athlete not found."
+                ));
 
         if (req.getName() != null) athlete.setName(req.getName());
         if (req.getPosition() != null) athlete.setPosition(req.getPosition());
@@ -67,7 +77,11 @@ public class CoachAthleteService {
                 try {
                     u.setBirthDate(LocalDate.parse(req.getBirth()));
                 } catch (Exception e) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de birth inválido (use YYYY-MM-DD)");
+                    throw new BusinessException(
+                            ErrorCode.VALIDATION_ERROR,
+                            HttpStatus.BAD_REQUEST,
+                            "Birth format invalid (use YYYY-MM-DD)."
+                    );
                 }
             }
             usuarioRepo.save(u);
@@ -102,7 +116,11 @@ public class CoachAthleteService {
     @Transactional
     public void deleteAthlete(Long athleteId) {
         Athlete a = atletaRepo.findById(athleteId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Atleta não encontrada"));
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        HttpStatus.NOT_FOUND,
+                        "Athlete not found."
+                ));
 
         atletaRepo.deleteById(athleteId);
         extraRepo.deleteById(athleteId);

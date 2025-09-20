@@ -1,5 +1,7 @@
 package com.simada_backend.service.coach;
 
+import com.simada_backend.api.error.BusinessException;
+import com.simada_backend.api.error.ErrorCode;
 import com.simada_backend.dto.response.coach.CoachProfileDTO;
 import com.simada_backend.events.CoachTransferCompletedEvent;
 import com.simada_backend.model.Coach;
@@ -10,6 +12,7 @@ import com.simada_backend.service.FileStorageService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,14 +33,22 @@ public class CoachProfileService {
     @Transactional
     public CoachProfileDTO getProfile(Long userId) {
         Coach coach = coachRepo.findByIdWithUser(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Coach não encontrado: " + userId));
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        HttpStatus.NOT_FOUND,
+                        "Coach not found."
+                ));
         return toDto(coach);
     }
 
     @Transactional
     public void updateProfile(Long coachId, CoachProfileDTO dto) {
         Coach coach = coachRepo.findByIdWithUser(coachId)
-                .orElseThrow(() -> new IllegalArgumentException("Coach não encontrado: " + coachId));
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        HttpStatus.NOT_FOUND,
+                        "Coach not found."
+                ));
 
         User u = coach.getUser();
 
@@ -59,7 +70,11 @@ public class CoachProfileService {
     @Transactional
     public String uploadAvatar(Long coachId, MultipartFile file) throws Exception {
         var coach = coachRepo.findByIdWithUser(coachId)
-                .orElseThrow(() -> new IllegalArgumentException("Coach not found: " + coachId));
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        HttpStatus.NOT_FOUND,
+                        "Coach not found."
+                ));
 
         String publicUrl = fileStorage.storeCoachAvatar(coachId, file);
         coach.getUser().setPhoto(publicUrl);
@@ -71,7 +86,11 @@ public class CoachProfileService {
     public void deleteOrTransferCoachAccount(Long sourceCoachId, String transferToEmail) {
         // NÃO carrega Coach como entidade. Só pega os dados necessários:
         Long sourceUserId = coachRepo.findUserIdByCoachId(sourceCoachId)
-                .orElseThrow(() -> new IllegalArgumentException("Coach não encontrado: " + sourceCoachId));
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        HttpStatus.NOT_FOUND,
+                        "Coach not found."
+                ));
 
         String sourceCoachName = coachRepo.findUserNameById(sourceUserId)
                 .orElse("Coach " + sourceCoachId);
@@ -81,16 +100,20 @@ public class CoachProfileService {
             String email = transferToEmail.trim();
 
             Long destUserId = coachRepo.findUserIdByEmail(email)
-                    .orElseThrow(() -> new IllegalArgumentException("Usuário destino não encontrado: " + email));
+                    .orElseThrow(() -> new BusinessException(
+                            ErrorCode.RESOURCE_NOT_FOUND,
+                            HttpStatus.NOT_FOUND,
+                            "Destination user not found." + email
+                    ));
 
             if (destUserId.equals(sourceUserId)) {
-                throw new IllegalArgumentException("E-mail de destino é o mesmo do coach de origem.");
+                throw new IllegalArgumentException("Destination email is the same as the source coach.");
             }
 
             // garante coach destino via INSERT nativo (sem JPA)
             coachRepo.ensureCoachExistsForUser(destUserId);
             Long destCoachId = coachRepo.findCoachIdByUserId(destUserId)
-                    .orElseThrow(() -> new IllegalStateException("Falha ao criar/recuperar Coach destino para " + email));
+                    .orElseThrow(() -> new IllegalStateException("Failed to create/retrieve destination Coach for " + email));
 
             // reassign TUDO por coachId (NÃO por userId)
             coachRepo.reassignAthlete(sourceCoachId, destCoachId);

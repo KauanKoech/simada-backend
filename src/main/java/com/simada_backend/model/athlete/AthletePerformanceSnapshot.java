@@ -1,5 +1,6 @@
 package com.simada_backend.model.athlete;
 
+import com.simada_backend.model.Coach;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,10 +20,14 @@ public class AthletePerformanceSnapshot {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "athlete_id", nullable = false)
-    private Long athleteId;
-    @Column(name = "coach_id", nullable = false)
-    private Long coachId;
+    @OneToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "athlete_id", unique = true, nullable = false)
+    private Athlete athlete;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "coach_id", nullable = false)
+    private Coach coach;
+
     @Column(name = "points", nullable = false)
     private Integer points;
     @Column(name = "position", nullable = false)

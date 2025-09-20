@@ -1,5 +1,7 @@
 package com.simada_backend.model.psycho;
 
+import com.simada_backend.model.athlete.Athlete;
+import com.simada_backend.model.session.Session;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,11 +21,13 @@ public class PsychoFormAnswer {
     @Column(nullable = false)
     private String token;
 
-    @Column(name = "id_athlete", nullable = false)
-    private Long idAthlete;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_athlete", unique = true, nullable = false)
+    private Athlete athlete;
 
-    @Column(name = "id_session", nullable = false)
-    private Long idSession;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_session", nullable = false)
+    private Session idSession;
 
     @Column(name = "srpe", nullable = false)
     private int srpe;

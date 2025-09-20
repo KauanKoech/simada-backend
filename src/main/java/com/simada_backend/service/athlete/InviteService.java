@@ -74,7 +74,7 @@ public class InviteService {
         } catch (DataIntegrityViolationException e) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Este atleta já foi convidado por este treinador."
+                    "This athlete was already invited by the coach."
             );
         }
     }
@@ -83,7 +83,7 @@ public class InviteService {
         String url = appFrontUrl + "/signup?invite=" + inv.getToken();
         String html = """
                 <div style="font-family:sans-serif">
-                  <p>Você foi convidado por <b>%s</b> para se cadastrar no Wiko.</p>
+                  <p>You have been invited by <b>%s</b> to register at Wiko.</p>
                   <p>Clique para criar sua conta: <a href="%s">%s</a></p>
                   <p>Convite expira em %s.</p>
                 </div>

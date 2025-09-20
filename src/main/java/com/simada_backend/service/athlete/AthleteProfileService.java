@@ -1,5 +1,7 @@
 package com.simada_backend.service.athlete;
 
+import com.simada_backend.api.error.BusinessException;
+import com.simada_backend.api.error.ErrorCode;
 import com.simada_backend.dto.response.athlete.*;
 import com.simada_backend.dto.request.athlete.*;
 import com.simada_backend.repository.UserRepository;
@@ -7,6 +9,7 @@ import com.simada_backend.repository.athlete.AthleteProfileRepository;
 import com.simada_backend.repository.athlete.AthleteRepository;
 import com.simada_backend.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +33,12 @@ public class AthleteProfileService {
     @Transactional(readOnly = true)
     public AthleteProfileDTO getProfile(Long athleteId) {
         var p = repo.findProfile(athleteId)
-                .orElseThrow(() -> new IllegalArgumentException("Athlete not found: " + athleteId));
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        HttpStatus.NOT_FOUND,
+                        "Athlete not found."
+                ));
+
         return new AthleteProfileDTO(
                 p.getId(),
                 p.getName(),
@@ -45,7 +53,11 @@ public class AthleteProfileService {
     @Transactional
     public void updateProfile(Long athleteId, UpdateAthleteProfileRequest req) {
         Long userId = repo.findUserIdByAthleteId(athleteId);
-        if (userId == null) throw new IllegalArgumentException("User not linked to athlete: " + athleteId);
+        if (userId == null) throw new BusinessException(
+                ErrorCode.RESOURCE_NOT_FOUND,
+                HttpStatus.NOT_FOUND,
+                "User not linked to athlete."
+        );
 
         // atualiza “nome esportivo” do athlete se veio
         if (req.name() != null && !req.name().isBlank()) {
@@ -62,10 +74,14 @@ public class AthleteProfileService {
     }
 
     @Transactional
-    public String    uploadAvatar(Long athleteId, MultipartFile file) {
+    public String uploadAvatar(Long athleteId, MultipartFile file) {
         try {
             var coach = athleteRepository.findById(athleteId)
-                    .orElseThrow(() -> new IllegalArgumentException("Athlete not found: " + athleteId));
+                    .orElseThrow(() -> new BusinessException(
+                            ErrorCode.RESOURCE_NOT_FOUND,
+                            HttpStatus.NOT_FOUND,
+                            "Athlete not found."
+                    ));
 
 
             String publicUrl = fileStorage.storeAthleteAvatar(athleteId, file);
@@ -73,18 +89,30 @@ public class AthleteProfileService {
             userRepo.save(coach.getUser());
             return publicUrl;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to upload avatar", e);
+            throw new BusinessException(
+                    ErrorCode.FORBIDDEN,
+                    HttpStatus.BAD_REQUEST,
+                    "Failed to upload avatar."
+            );
         }
     }
 
     @Transactional
     public void changePassword(Long athleteId, UpdatePasswordRequest req) {
         Long userId = repo.findUserIdByAthleteId(athleteId);
-        if (userId == null) throw new IllegalArgumentException("User not linked to athlete: " + athleteId);
+        if (userId == null) throw new BusinessException(
+                ErrorCode.RESOURCE_NOT_FOUND,
+                HttpStatus.NOT_FOUND,
+                "User not linked to athlete."
+        );
 
         String currentHash = repo.getPasswordHash(userId);
         if (currentHash == null || !passwordEncoder.matches(req.currentPassword(), currentHash)) {
-            throw new IllegalArgumentException("Current password is invalid");
+            throw new BusinessException(
+                    ErrorCode.FORBIDDEN,
+                    HttpStatus.BAD_REQUEST,
+                    "Current password is invalid."
+            );
         }
         String newHash = passwordEncoder.encode(req.newPassword());
         repo.setPasswordHash(userId, newHash);

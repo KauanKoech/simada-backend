@@ -1,5 +1,7 @@
 package com.simada_backend.service;
 
+import com.simada_backend.api.error.BusinessException;
+import com.simada_backend.api.error.ErrorCode;
 import com.simada_backend.dto.request.LoginRequest;
 import com.simada_backend.dto.request.athlete.RegisterAthleteRequest;
 import com.simada_backend.dto.request.RegisterCoachRequest;
@@ -39,7 +41,11 @@ public class AuthService {
     @Transactional
     public UserResponseDTO registerCoach(RegisterCoachRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email já cadastrado");
+            throw new BusinessException(
+                    ErrorCode.EMAIL_IN_USE,
+                    HttpStatus.CONFLICT,
+                    "This email is already registered."
+            );
         }
 
         User user = new User();
@@ -60,11 +66,14 @@ public class AuthService {
                 user.getUserType(), user.getPhoto());
     }
 
-
     @Transactional
     public UserResponseDTO registerAthlete(RegisterAthleteRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email já cadastrado");
+            throw new BusinessException(
+                    ErrorCode.EMAIL_IN_USE,
+                    HttpStatus.CONFLICT,
+                    "This email is already registered."
+            );
         }
 
         User user = new User();
@@ -76,7 +85,11 @@ public class AuthService {
         userRepository.save(user);
 
         Coach coach = coachRepository.findById((long) request.getIdCoach())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Treinador não encontrado"));
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        HttpStatus.NOT_FOUND,
+                        "Coach not found."
+                ));
 
         Athlete athlete = new Athlete();
         athlete.setName(request.getName());
@@ -95,11 +108,19 @@ public class AuthService {
     public UserResponseDTO login(LoginRequest request) {
         User user = userRepository
                 .findFirstByEmailOrderByIdDesc(request.getEmail())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas"));
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.AUTH_INVALID_CREDENTIALS,
+                        HttpStatus.UNAUTHORIZED,
+                        "Invalid credentials"
+                ));
 
-//        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-//            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas");
-//        }
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new BusinessException(
+                    ErrorCode.AUTH_INVALID_CREDENTIALS,
+                    HttpStatus.UNAUTHORIZED,
+                    "Invalid credentials"
+            );
+        }
         return new UserResponseDTO(user.getId(), user.getEmail(), user.getName(),
                 user.getUserType(), user.getPhoto());
     }

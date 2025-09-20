@@ -6,12 +6,14 @@ import com.simada_backend.dto.request.psycho.PsychoFormSubmitRequest;
 import com.simada_backend.dto.response.psycho.PsychoAnswerDTO;
 import com.simada_backend.model.psycho.PsychoFormInvite;
 import com.simada_backend.service.psycho.PsychoFormService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/psycho-form")
 @CrossOrigin(origins = "http://localhost:3000")
@@ -36,18 +38,17 @@ public class PsychoFormController {
 
             List<PsychoFormInvite> convites = service.createConvites(coachId, req.getSessionId(), frontendBaseUrl);
 
-            String firstToken = null;
-            if (!convites.isEmpty()) {
-                firstToken = convites.get(0).getToken();
-            }
+            String firstToken = convites.isEmpty() ? null : convites.get(0).getToken();
+
+            String base = (frontendBaseUrl != null && !frontendBaseUrl.isBlank())
+                    ? frontendBaseUrl
+                    : "http://localhost:3000";
 
             List<Map<String, Object>> sentTo = convites.stream()
                     .map(c -> Map.<String, Object>of(
-                            "athleteId", c.getIdAthlete(),
+                            "athleteId", c.getIdAthlete().getId(),   // <-- aqui!
                             "email", c.getEmail(),
-                            "url", ((frontendBaseUrl != null && !frontendBaseUrl.isBlank())
-                                    ? frontendBaseUrl
-                                    : "http://localhost:3000") + "/psycho-form/" + c.getToken()
+                            "url", base + "/psycho-form/" + c.getToken()
                     ))
                     .toList();
 
@@ -58,17 +59,21 @@ public class PsychoFormController {
         } catch (RuntimeException ex) {
             return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
         } catch (Exception ex) {
-            return ResponseEntity.internalServerError().body(Map.of("message", "Falha ao gerar/enviar os convites."));
+            return ResponseEntity.internalServerError().body(Map.of("message", "Failed generating/sending invites."));
         }
     }
 
-    @GetMapping("/{token}")
+
+    @GetMapping("/{token:.+}")
     public ResponseEntity<?> validate(@PathVariable String token) {
         try {
-            var convite = service.validateToken(token);
+            log.info("validate() called with token={}", token);
+            PsychoFormInvite convite = service.validateToken(token);
+            log.info("validate() found invite id={}, status={}, expiresAt={}",
+                    convite.getId(), convite.getStatus(), convite.getExpiresAt());
             return ResponseEntity.ok(Map.of(
-                    "athleteId", convite.getIdAthlete(),
-                    "coachId", convite.getIdCoach(),
+                    "athleteId", convite.getIdAthlete().getId(),
+                    "coachId", convite.getIdCoach().getId(),
                     "email", convite.getEmail()
             ));
         } catch (RuntimeException ex) {
@@ -90,7 +95,7 @@ public class PsychoFormController {
     }
 
     @GetMapping("/answers/sessions/{sessionId}")
-    public List<PsychoAnswerDTO> getAnswers(@PathVariable Long sessionId){
+    public List<PsychoAnswerDTO> getAnswers(@PathVariable Long sessionId) {
         return service.getPsychoAnswersBySession(sessionId);
     }
 }

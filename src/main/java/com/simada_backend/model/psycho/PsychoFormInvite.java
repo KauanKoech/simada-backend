@@ -1,5 +1,8 @@
 package com.simada_backend.model.psycho;
 
+import com.simada_backend.model.Coach;
+import com.simada_backend.model.athlete.Athlete;
+import com.simada_backend.model.session.Session;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,14 +22,17 @@ public class PsychoFormInvite {
     @Column(nullable = false, unique = true)
     private String token;
 
-    @Column(name = "id_coach", nullable = false)
-    private Long idCoach;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_coach", nullable = false)
+    private Coach idCoach;
 
-    @Column(name = "id_athlete", nullable = false)
-    private Long idAthlete;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_athlete", unique = true, nullable = false)
+    private Athlete idAthlete;
 
-    @Column(name = "id_session", nullable = false)
-    private Long idSession;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_session", nullable = false)
+    private Session idSession;
 
     @Column(nullable = false)
     private String email;

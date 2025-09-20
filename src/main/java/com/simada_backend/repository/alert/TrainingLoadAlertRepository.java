@@ -12,11 +12,15 @@ import java.util.Optional;
 
 public interface TrainingLoadAlertRepository extends CrudRepository<TrainingLoadAlert, Long> {
 
+    Optional<TrainingLoadAlert> findFirstByAthlete_IdOrderByCreatedAtDesc(Long athleteId);
+
+    Optional<TrainingLoadAlert> findByAthlete_IdAndSession_Id(Long athleteId, Long sessionId);
+
     @Query("""
             SELECT new com.simada_backend.dto.response.alert.PerformanceAlertDTO(
                 t.id, 
-                t.athleteId, 
-                t.coachId,
+                t.athlete.id, 
+                t.coach.id,
                 t.acwr, 
                 t.monotony, 
                 t.strain, 
@@ -31,9 +35,9 @@ public interface TrainingLoadAlertRepository extends CrudRepository<TrainingLoad
                 u.photo
             )
             FROM TrainingLoadAlert t
-            JOIN Athlete a ON a.id = t.athleteId
+            JOIN Athlete a ON a.id = t.athlete.id
             JOIN User u ON u.id = a.user.id
-            WHERE t.coachId = :coachId
+            WHERE t.coach.id = :coachId
             ORDER BY t.createdAt DESC
             """)
     List<PerformanceAlertDTO> findByCoachId(Long coachId);
@@ -41,7 +45,7 @@ public interface TrainingLoadAlertRepository extends CrudRepository<TrainingLoad
     @Query("""
             SELECT new com.simada_backend.dto.response.alert.PerformanceAnswerDTO(
                 t.id, 
-                t.athleteId, 
+                t.athlete.id, 
                 a.name,
                 u.email,
                 a.position,
@@ -59,10 +63,10 @@ public interface TrainingLoadAlertRepository extends CrudRepository<TrainingLoad
                 t.pctQwUpLabel
             )
             FROM TrainingLoadAlert t
-            JOIN Athlete a ON a.id = t.athleteId
-            JOIN AthleteExtra ax ON ax.athlete.id = t.athleteId
+            JOIN Athlete a ON a.id = t.athlete.id
+            JOIN AthleteExtra ax ON ax.athlete.id = t.athlete.id
             JOIN User u ON u.id = a.user.id
-            WHERE t.athleteId = :athleteId                         
+            WHERE t.athlete.id = :athleteId                         
             """)
     Optional<PerformanceAnswerDTO> findAnswerBySessionAndAthlete(
             @Param("athleteId") Long athleteId

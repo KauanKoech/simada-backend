@@ -1,0 +1,13 @@
+package com.simada_backend.api.error;
+
+public enum ErrorCode {
+    AUTH_INVALID_CREDENTIALS,
+    EMAIL_IN_USE,
+    VALIDATION_ERROR,
+    RESOURCE_NOT_FOUND,
+    FORBIDDEN,
+    TOKEN_EXPIRED,
+    TOKEN_INVALID,
+    CONSTRAINT_VIOLATION,
+    INTERNAL_ERROR
+}

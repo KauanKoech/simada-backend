@@ -1,16 +1,23 @@
 package com.simada_backend.service.alert;
 
+import com.simada_backend.api.error.BusinessException;
+import com.simada_backend.api.error.ErrorCode;
 import com.simada_backend.dto.request.alert.PerfAlertRecoRequest;
 import com.simada_backend.dto.request.alert.PsyAlertRecoRequest;
+import com.simada_backend.model.Coach;
+import com.simada_backend.model.athlete.Athlete;
 import com.simada_backend.model.recommendation.PerfRecommendation;
 import com.simada_backend.model.recommendation.PsyRecommendation;
-import com.simada_backend.integrations.GroqClient;
+import com.simada_backend.model.session.Session;
+import com.simada_backend.repository.athlete.AthleteRepository;
+import com.simada_backend.repository.coach.CoachRepository;
 import com.simada_backend.repository.recommendation.PerfRecommendationRepository;
 import com.simada_backend.repository.recommendation.PsyRecommendationRepository;
 import com.simada_backend.repository.session.SessionRepository;
 import com.simada_backend.utils.Labels;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
@@ -21,10 +28,13 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class AIRecommendationAlertService {
 
-    private final GroqClient groqClient;
+    //private final GroqClient groqClient;
     private final PsyRecommendationRepository psyRecommendationRepository;
     private final PerfRecommendationRepository perfRecommendationRepository;
     private final SessionRepository sessionRepository;
+    private final AthleteRepository athleteRepository;
+    private final CoachRepository coachRepository;
+    private final LlmChatService llmChatService;
 
     @Value("${groq.model:}")
     private String modelConfigured;
@@ -32,7 +42,7 @@ public class AIRecommendationAlertService {
     @Transactional(readOnly = true)
     public Mono<String> generatePsychoRecommendations(Long sessionId, Long athleteId, PsyAlertRecoRequest req) {
         return Mono.fromCallable(() ->
-                        psyRecommendationRepository.findBySessionIdAndAthleteId(sessionId, athleteId)
+                        psyRecommendationRepository.findBySession_IdAndAthlete_Id(sessionId, athleteId)
                 )
                 .flatMap(opt -> opt.map(rec -> Mono.just(rec.getText()))
                         .orElseGet(() -> psychoCallGroqAndPersist(sessionId, athleteId, req)));
@@ -41,7 +51,7 @@ public class AIRecommendationAlertService {
     @Transactional(readOnly = true)
     public Mono<String> generatePerformanceRecommendations(Long sessionId, Long athleteId, PerfAlertRecoRequest req) {
         return Mono.fromCallable(() ->
-                        perfRecommendationRepository.findBySessionIdAndAthleteId(sessionId, athleteId)
+                        perfRecommendationRepository.findBySession_IdAndAthlete_Id(sessionId, athleteId)
                 )
                 .flatMap(opt -> opt.map(rec -> Mono.just(rec.getText()))
                         .orElseGet(() -> perfCallGroqAndPersist(sessionId, athleteId, req)));
@@ -91,7 +101,7 @@ public class AIRecommendationAlertService {
                 req.srpe(), req.fatigue(), req.soreness(), req.mood(), req.energy()
         );
 
-        return groqClient.chat(systemPrompt, userPrompt)
+        return Mono.fromCallable(() -> llmChatService.chat(systemPrompt, userPrompt))
                 // Se vier vazio/nulo, considera erro para acionar onErrorResume -> fallback
                 .flatMap(text -> (text != null && !text.isBlank())
                         ? Mono.just(saveAndReturnPsychoRec(sessionId, athleteId, finalCoachId, req, text, PsyRecommendation.Source.groq))
@@ -164,7 +174,7 @@ public class AIRecommendationAlertService {
         );
 
 
-        return groqClient.chat(perfSystemPrompt, perfUserPrompt)
+        return Mono.fromCallable(() -> llmChatService.chat(perfSystemPrompt, perfUserPrompt))
                 // Se vier vazio/nulo, considera erro para acionar onErrorResume -> fallback
                 .flatMap(text -> (text != null && !text.isBlank())
                         ? Mono.just(saveAndReturnPerfRec(sessionId, athleteId, finalCoachId, req, text, PerfRecommendation.Source.groq))
@@ -176,13 +186,27 @@ public class AIRecommendationAlertService {
                 });
     }
 
-    private String saveAndReturnPsychoRec(Long sessionId, Long athleteId, Long coachId,
-                                          PsyAlertRecoRequest req, String text,
-                                          com.simada_backend.model.recommendation.PsyRecommendation.Source source) {
+    private String saveAndReturnPsychoRec(
+            Long sessionId, Long athleteId, Long coachId,
+            PsyAlertRecoRequest req, String text,
+            com.simada_backend.model.recommendation.PsyRecommendation.Source source
+    ) {
+        Session session = sessionRepository.findById(sessionId.intValue())
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Session not found."));
+
+        Athlete athlete = athleteRepository.findById(athleteId)
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Athlete not found."));
+
+        Coach coach = coachRepository.findById(coachId)
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Coach not found."));
+
         PsyRecommendation rec = PsyRecommendation.builder()
-                .sessionId(sessionId)
-                .athleteId(athleteId)
-                .coachId(coachId)
+                .session(session)
+                .athlete(athlete)
+                .coach(coach)
                 .text(text)
                 .lang("en")
                 .model(source == PsyRecommendation.Source.groq ? modelConfigured : null)
@@ -192,18 +216,33 @@ public class AIRecommendationAlertService {
                 .soreness(req.soreness())
                 .mood(req.mood())
                 .energy(req.energy())
-                .createdAt(Instant.now())
+                .createdAt(Instant.now()) // opcional (há @PrePersist)
                 .build();
+
         return saveBlockingPsycho(rec).getText();
     }
 
-    private String saveAndReturnPerfRec(Long sessionId, Long athleteId, Long coachId,
-                                        PerfAlertRecoRequest req, String text,
-                                        com.simada_backend.model.recommendation.PerfRecommendation.Source source) {
+    private String saveAndReturnPerfRec(
+            Long sessionId, Long athleteId, Long coachId,
+            PerfAlertRecoRequest req, String text,
+            com.simada_backend.model.recommendation.PerfRecommendation.Source source
+    ) {
+        Session session = sessionRepository.findById(sessionId.intValue())
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Session not found."));
+
+        Athlete athlete = athleteRepository.findById(athleteId)
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Athlete not found."));
+
+        Coach coach = coachRepository.findById(coachId)
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Coach not found."));
+
         PerfRecommendation rec = PerfRecommendation.builder()
-                .sessionId(sessionId)
-                .athleteId(athleteId)
-                .coachId(coachId)
+                .session(session)
+                .athlete(athlete)
+                .coach(coach)
                 .text(text)
                 .lang("en")
                 .model(source == PerfRecommendation.Source.groq ? modelConfigured : null)
@@ -212,21 +251,25 @@ public class AIRecommendationAlertService {
                 .monotony(req.monotony())
                 .strain(req.strain())
                 .pctQwUp(req.pctQwUp())
-                .createdAt(Instant.now())
+                .createdAt(Instant.now()) // opcional
                 .build();
+
         return saveBlockingPerf(rec).getText();
     }
 
     @Transactional
     protected PsyRecommendation saveBlockingPsycho(PsyRecommendation rec) {
-        return psyRecommendationRepository.findBySessionIdAndAthleteId(rec.getSessionId(), rec.getAthleteId())
+        Long sessionId = rec.getSession().getId();
+        Long athleteId = rec.getAthlete().getId();
+
+        return psyRecommendationRepository.findBySession_IdAndAthlete_Id(sessionId, athleteId)
                 .orElseGet(() -> {
                     try {
                         return psyRecommendationRepository.save(rec);
                     } catch (org.springframework.dao.DataIntegrityViolationException e) {
-                        // em caso de corrida na UNIQUE(session_id, athlete_id), retorna o já existente
+                        // corrida na UNIQUE(session_id, athlete_id): retorna o existente
                         return psyRecommendationRepository
-                                .findBySessionIdAndAthleteId(rec.getSessionId(), rec.getAthleteId())
+                                .findBySession_IdAndAthlete_Id(sessionId, athleteId)
                                 .orElseThrow(() -> e);
                     }
                 });
@@ -234,18 +277,22 @@ public class AIRecommendationAlertService {
 
     @Transactional
     protected PerfRecommendation saveBlockingPerf(PerfRecommendation rec) {
-        return perfRecommendationRepository.findBySessionIdAndAthleteId(rec.getSessionId(), rec.getAthleteId())
+        Long sessionId = rec.getSession().getId();
+        Long athleteId = rec.getAthlete().getId();
+
+        return perfRecommendationRepository.findBySession_IdAndAthlete_Id(sessionId, athleteId)
                 .orElseGet(() -> {
                     try {
                         return perfRecommendationRepository.save(rec);
                     } catch (org.springframework.dao.DataIntegrityViolationException e) {
-                        // em caso de corrida na UNIQUE(session_id, athlete_id), retorna o já existente
+                        // corrida na UNIQUE(session_id, athlete_id): retorna o existente
                         return perfRecommendationRepository
-                                .findBySessionIdAndAthleteId(rec.getSessionId(), rec.getAthleteId())
+                                .findBySession_IdAndAthlete_Id(sessionId, athleteId)
                                 .orElseThrow(() -> e);
                     }
                 });
     }
+
 
     private String psyFallback(PsyAlertRecoRequest r) {
         int riskCount = 0;

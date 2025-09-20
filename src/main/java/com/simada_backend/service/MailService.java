@@ -1,6 +1,5 @@
 package com.simada_backend.service;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.mail.javamail.*;
 import org.springframework.stereotype.Service;
 import jakarta.mail.internet.MimeMessage;

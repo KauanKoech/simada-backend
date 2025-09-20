@@ -35,29 +35,29 @@ public class PsychoService {
         int total = srpe + fatigue + soreness + moodInv + energyInv;
         RiskLevel level = mapLevel(total);
 
-        // 1) salva o score
+        // 1) Save risk score (now using ENTITIES instead of raw IDs)
         PsychoRiskScore prs = new PsychoRiskScore();
-        prs.setCoachId(invite.getIdCoach());
-        prs.setAthleteId(invite.getIdAthlete());
-        prs.setSessionId(invite.getIdSession());
-        prs.setAnswerId(answer.getId());
+        prs.setCoach(invite.getIdCoach());       // Coach entity
+        prs.setAthlete(invite.getIdAthlete());   // Athlete entity
+        prs.setSession(invite.getIdSession());   // Session entity
+        prs.setAnswer(answer);                   // PsychoFormAnswer entity
         prs.setRiskLevel(level);
         prs.setTotalScore(total);
         prs.setCreatedAt(LocalDateTime.now());
         riskRepo.save(prs);
 
-        // 2) cria alerta somente se MODERATE/HIGH
+        // 2) Create alert only for MODERATE/HIGH
         if (level == RiskLevel.MODERATE || level == RiskLevel.HIGH) {
             PsychoAlert alert = new PsychoAlert();
-            alert.setCoachId(invite.getIdCoach());
-            alert.setAthleteId(invite.getIdAthlete());
-            alert.setSessionId(invite.getIdSession());
-            alert.setAnswerId(answer.getId());
+            alert.setCoach(invite.getIdCoach());
+            alert.setAthlete(invite.getIdAthlete());
+            alert.setSession(invite.getIdSession());
+            alert.setAnswer(answer);
             alert.setRuleCode(level == RiskLevel.HIGH ? "PSYCHO_HIGH" : "PSYCHO_MODERATE");
             alert.setSeverity(level == RiskLevel.HIGH ? "CRITICAL" : "WARN");
 
-            String msg = "Score: " + total + " (" + (level == RiskLevel.HIGH ? "Risco Elevado" : "Atenção") + "). "
-                    + "Detalhe — sRPE: " + srpe
+            String msg = "Score: " + total + " (" + (level == RiskLevel.HIGH ? "High risk" : "Moderate risk") + "). "
+                    + "Details — sRPE: " + srpe
                     + ", Fatigue: " + fatigue
                     + ", Soreness: " + soreness
                     + ", Mood(inv): " + moodInv

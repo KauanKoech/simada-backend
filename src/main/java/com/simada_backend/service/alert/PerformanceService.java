@@ -1,8 +1,13 @@
 package com.simada_backend.service.alert;
 
+import com.simada_backend.api.error.BusinessException;
+import com.simada_backend.api.error.ErrorCode;
 import com.simada_backend.dto.response.alert.PerformanceAlertDTO;
 import com.simada_backend.dto.response.alert.PerformanceAnswerDTO;
+import com.simada_backend.model.session.TrainingLoadAlert;
 import com.simada_backend.repository.alert.TrainingLoadAlertRepository;
+import jakarta.transaction.Transactional;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,5 +27,17 @@ public class PerformanceService {
 
     public Optional<PerformanceAnswerDTO> getBySessionAndAthlete(Long athleteId) {
         return repo.findAnswerBySessionAndAthlete(athleteId);
+    }
+
+    @Transactional
+    public void deleteAlert(Long alertId, Long coachId) {
+        System.out.println("Alerta Id: " + alertId + " Coach Id: " + coachId);
+        TrainingLoadAlert alert = repo.findByIdAndCoach_Id(alertId, coachId)
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        HttpStatus.NOT_FOUND,
+                        "Training load alert not found for this coach."
+                ));
+        repo.delete(alert);
     }
 }

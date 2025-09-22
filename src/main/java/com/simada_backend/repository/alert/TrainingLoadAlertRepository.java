@@ -42,6 +42,8 @@ public interface TrainingLoadAlertRepository extends CrudRepository<TrainingLoad
             """)
     List<PerformanceAlertDTO> findByCoachId(Long coachId);
 
+    Optional<TrainingLoadAlert> findByIdAndCoach_Id(Long id, Long coachId);
+
     @Query("""
             SELECT new com.simada_backend.dto.response.alert.PerformanceAnswerDTO(
                 t.id, 

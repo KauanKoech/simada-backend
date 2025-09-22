@@ -34,4 +34,5 @@ public class AuthController {
     public UserResponseDTO login(@RequestBody LoginRequest request) {
         return authService.login(request);
     }
+
 }

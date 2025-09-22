@@ -12,6 +12,8 @@ import com.simada_backend.model.Coach;
 import com.simada_backend.repository.athlete.AthleteRepository;
 import com.simada_backend.repository.coach.CoachRepository;
 import com.simada_backend.repository.UserRepository;
+import com.simada_backend.security.JwtService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,22 +23,14 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.Objects;
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
     private final CoachRepository coachRepository;
     private final AthleteRepository athleteRepository;
     private final PasswordEncoder passwordEncoder;
-
-    public AuthService(UserRepository userRepository,
-                       CoachRepository coachRepository,
-                       AthleteRepository athleteRepository,
-                       PasswordEncoder passwordEncoder) {
-        this.userRepository = Objects.requireNonNull(userRepository);
-        this.coachRepository = Objects.requireNonNull(coachRepository);
-        this.athleteRepository = Objects.requireNonNull(athleteRepository);
-        this.passwordEncoder = Objects.requireNonNull(passwordEncoder);
-    }
+    private final JwtService jwt;
 
     @Transactional
     public UserResponseDTO registerCoach(RegisterCoachRequest request) {
@@ -62,8 +56,10 @@ public class AuthService {
         coach.setUser(user);
         coachRepository.save(coach);
 
+        String token = jwt.generate(user);
+
         return new UserResponseDTO(user.getId(), user.getEmail(), user.getName(),
-                user.getUserType(), user.getPhoto());
+                user.getUserType(), user.getPhoto(), token);
     }
 
     @Transactional
@@ -100,8 +96,10 @@ public class AuthService {
         athlete.setCoach(coach);
         athleteRepository.save(athlete);
 
+        String token = jwt.generate(user);
+
         return new UserResponseDTO(user.getId(), user.getEmail(), user.getName(),
-                user.getUserType(), user.getPhoto());
+                user.getUserType(), user.getPhoto(), token);
     }
 
 
@@ -121,7 +119,10 @@ public class AuthService {
                     "Invalid credentials"
             );
         }
+
+        String token = jwt.generate(user);
+
         return new UserResponseDTO(user.getId(), user.getEmail(), user.getName(),
-                user.getUserType(), user.getPhoto());
+                user.getUserType(), user.getPhoto(), token);
     }
 }

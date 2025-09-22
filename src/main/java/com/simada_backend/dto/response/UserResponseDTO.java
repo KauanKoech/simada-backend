@@ -5,5 +5,6 @@ public record UserResponseDTO(
         String email,
         String name,
         String userType,
-        String userPhoto
+        String userPhoto,
+        String accessToken
 ) {}

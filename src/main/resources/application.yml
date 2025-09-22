@@ -8,3 +8,9 @@ spring:
           model: llama-3.3-70b-versatile
           temperature: 0.2
           max-tokens: 400
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET}
+      expiration: 3600000
+      issuer: "SIMADA"

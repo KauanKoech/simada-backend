@@ -38,4 +38,13 @@ public class PerformanceAlertController {
                 service.getBySessionAndAthlete(athleteId).orElse(null)
         );
     }
+
+    @DeleteMapping("/performance/{alertId}/delete/{coachId}")
+    public ResponseEntity<Void> delete(
+            @PathVariable("alertId") Long alertId,
+            @PathVariable("coachId") Long coachId
+    ) {
+        service.deleteAlert(alertId, coachId);
+        return ResponseEntity.noContent().build(); // 204
+    }
 }

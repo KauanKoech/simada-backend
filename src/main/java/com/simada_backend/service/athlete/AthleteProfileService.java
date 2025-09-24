@@ -5,8 +5,19 @@ import com.simada_backend.api.error.ErrorCode;
 import com.simada_backend.dto.response.athlete.*;
 import com.simada_backend.dto.request.athlete.*;
 import com.simada_backend.repository.UserRepository;
+import com.simada_backend.repository.alert.PsychoAlertRepository;
+import com.simada_backend.repository.alert.TrainingLoadAlertRepository;
+import com.simada_backend.repository.athlete.AthleteExtraRepository;
+import com.simada_backend.repository.athlete.AthletePerformanceSnapshotRepository;
 import com.simada_backend.repository.athlete.AthleteProfileRepository;
 import com.simada_backend.repository.athlete.AthleteRepository;
+import com.simada_backend.repository.loadCalc.SessionLoadRepo;
+import com.simada_backend.repository.psycho.PsychoFormAnswerRepository;
+import com.simada_backend.repository.psycho.PsychoFormInviteRepository;
+import com.simada_backend.repository.psycho.PsychoRiskScoreRepository;
+import com.simada_backend.repository.recommendation.PerfRecommendationRepository;
+import com.simada_backend.repository.recommendation.PsyRecommendationRepository;
+import com.simada_backend.repository.session.MetricsRepository;
 import com.simada_backend.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,6 +38,17 @@ public class AthleteProfileService {
     private final AthleteProfileRepository repo;
     private final PasswordEncoder passwordEncoder;
     private final FileStorageService fileStorage;
+    private final MetricsRepository metricsRepository;
+    private final PerfRecommendationRepository perfRecRepo;
+    private final PsyRecommendationRepository psyRecRepo;
+    private final PsychoRiskScoreRepository riskRepo;
+    private final PsychoAlertRepository psychoAlertRepo;
+    private final PsychoFormAnswerRepository formAnswerRepo;
+    private final PsychoFormInviteRepository formInviteRepo;
+    private final SessionLoadRepo sessionLoadRepo;
+    private final AthletePerformanceSnapshotRepository snapshotRepo;
+    private final AthleteExtraRepository athleteExtraRepo;
+    private final TrainingLoadAlertRepository loadAlertRepo;
 
     private final Path uploadDir = Paths.get("uploads/avatars");
 
@@ -116,6 +138,35 @@ public class AthleteProfileService {
         }
         String newHash = passwordEncoder.encode(req.newPassword());
         repo.setPasswordHash(userId, newHash);
+    }
+
+    @Transactional
+    public void deleteAthleteCascade(Long athleteId) {
+        //Verifica existência
+        athleteRepository.findById(athleteId).orElseThrow(() ->
+                new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        HttpStatus.NOT_FOUND,
+                        "Athlete not found: id=" + athleteId
+                )
+        );
+
+        psychoAlertRepo.deleteByAnswerAthleteId(athleteId);
+        riskRepo.deleteByAnswerAthleteId(athleteId);
+
+        formAnswerRepo.deleteByAthleteId(athleteId);
+
+        perfRecRepo.deleteByAthleteId(athleteId);
+        psyRecRepo.deleteByAthleteId(athleteId);
+        formInviteRepo.deleteByAthleteId(athleteId);
+        sessionLoadRepo.deleteByAthleteId(athleteId);
+        snapshotRepo.deleteByAthleteId(athleteId);
+        athleteExtraRepo.deleteByAthleteId(athleteId);
+        loadAlertRepo.deleteByAthleteId(athleteId);
+        metricsRepository.deleteByAthleteId(athleteId);
+
+        //Por último, o próprio atleta
+        athleteRepository.deleteById(athleteId);
     }
 
     // util

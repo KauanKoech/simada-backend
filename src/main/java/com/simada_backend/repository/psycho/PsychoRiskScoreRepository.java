@@ -2,6 +2,7 @@ package com.simada_backend.repository.psycho;
 
 import com.simada_backend.model.psycho.PsychoRiskScore;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -30,6 +31,18 @@ public interface PsychoRiskScoreRepository extends JpaRepository<PsychoRiskScore
             """, nativeQuery = true)
     List<RiskCardRow> findRiskCardsByCoach(@Param("coachId") Long coachId);
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = """
+        DELETE prs
+        FROM psycho_risk_score prs
+        JOIN psycho_form_answer ans ON prs.answer_id = ans.id
+        WHERE ans.id_athlete = :athleteId
+        """, nativeQuery = true)
+    void deleteByAnswerAthleteId(@Param("athleteId") Long athleteId);
+
+    @Modifying
+    @Query("delete from PsyRecommendation r where r.athlete.id = :athleteId")
+    void deleteByAthleteId(@Param("athleteId") Long athleteId);
 
     interface RiskCardRow {
         Long getAthlete_id();

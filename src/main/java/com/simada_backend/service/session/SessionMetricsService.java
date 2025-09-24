@@ -15,7 +15,7 @@ import com.simada_backend.model.session.Session;
 import com.simada_backend.model.session.TrainingLoadAlert;
 import com.simada_backend.repository.alert.TrainingLoadAlertRepository;
 import com.simada_backend.repository.coach.CoachRepository;
-import com.simada_backend.repository.coach.RankingRepository;
+import com.simada_backend.repository.athlete.AthletePerformanceSnapshotRepository;
 import com.simada_backend.repository.loadCalc.SessionLoadRepo;
 import com.simada_backend.repository.loadCalc.WeeklyLoadQueryRepository;
 import com.simada_backend.service.loadCalc.*;
@@ -57,7 +57,7 @@ public class SessionMetricsService {
     private final CoachRepository coachRepository;
     private final WeeklyLoadQueryRepository weeklyLoadQueryRepository;
     private final TrainingLoadAlertRepository trainingLoadAlertRepository;
-    private final RankingRepository rankingRepository;
+    private final AthletePerformanceSnapshotRepository athletePerformanceSnapshotRepository;
 
     @Transactional
     public void importMetricsFromCsv(int sessionId, MultipartFile file) throws CsvParsingException {
@@ -325,11 +325,11 @@ public class SessionMetricsService {
                 snap.setCoach(sessionCoach);
                 snap.setPoints(points);
                 snap.setPosition(0);
-                rankingRepository.save(snap);
+                athletePerformanceSnapshotRepository.save(snap);
             }
 
             if (coachIdLong != null) {
-                var latestByCoach = rankingRepository.findCoachLatestSnapshots(coachIdLong);
+                var latestByCoach = athletePerformanceSnapshotRepository.findCoachLatestSnapshots(coachIdLong);
 
                 // Ajuste do sort: agora acessa IDs via entidades
                 latestByCoach.sort((s1, s2) -> {
@@ -346,7 +346,7 @@ public class SessionMetricsService {
                 for (var s : latestByCoach) {
                     s.setPosition(pos++);
                 }
-                rankingRepository.saveAll(latestByCoach);
+                athletePerformanceSnapshotRepository.saveAll(latestByCoach);
             }
 
         } catch (IOException e) {

@@ -1,7 +1,7 @@
-package com.simada_backend.repository.coach;
+package com.simada_backend.repository.athlete;
 
-import com.simada_backend.dto.response.TopPerformerDTO;
 import com.simada_backend.model.athlete.AthletePerformanceSnapshot;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public interface RankingRepository extends CrudRepository<AthletePerformanceSnapshot, Integer> {
+public interface AthletePerformanceSnapshotRepository extends CrudRepository<AthletePerformanceSnapshot, Integer> {
 
     Optional<AthletePerformanceSnapshot> findTopByAthleteIdOrderByAsOfDesc(Long athleteId);
 
@@ -71,4 +71,8 @@ public interface RankingRepository extends CrudRepository<AthletePerformanceSnap
 
         Double getLast_score();
     }
+
+    @Modifying
+    @Query("delete from AthletePerformanceSnapshot s where s.athlete.id = :athleteId")
+    void deleteByAthleteId(@Param("athleteId") Long athleteId);
 }

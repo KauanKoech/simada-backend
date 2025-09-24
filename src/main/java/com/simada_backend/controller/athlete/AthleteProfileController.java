@@ -45,4 +45,10 @@ public class AthleteProfileController {
 
     private record PhotoResponse(String photoUrl) {
     }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Void> deleteAthlete(@PathVariable Long id) {
+        service.deleteAthleteCascade(id);
+        return ResponseEntity.noContent().build(); // 204
+    }
 }

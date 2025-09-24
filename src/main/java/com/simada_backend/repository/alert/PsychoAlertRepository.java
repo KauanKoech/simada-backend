@@ -131,9 +131,16 @@ public interface PsychoAlertRepository extends JpaRepository<PsychoAlert, Long> 
             @Param("athleteId") Long athleteId
     );
 
-    @Modifying
-    @Query("UPDATE PsychoAlert a SET a.resolvedAt = :resolvedAt WHERE a.id = :id")
-    int resolve(@Param("id") Long id, @Param("resolvedAt") LocalDateTime resolvedAt);
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = """
+        DELETE pa
+        FROM psycho_alert pa
+        JOIN psycho_form_answer ans ON pa.answer_id = ans.id
+        WHERE ans.id_athlete = :athleteId
+        """, nativeQuery = true)
+    void deleteByAnswerAthleteId(@Param("athleteId") Long athleteId);
 
-    boolean existsByAnswerIdAndRuleCode(Long answerId, String ruleCode);
+    @Modifying
+    @Query("delete from PsychoAlert a where a.athlete.id = :athleteId")
+    void deleteByAthleteId(@Param("athleteId") Long athleteId);
 }

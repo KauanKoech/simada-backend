@@ -4,14 +4,13 @@ import com.simada_backend.dto.response.athlete.AthleteDTO;
 import com.simada_backend.dto.response.TopPerformerDTO;
 import com.simada_backend.dto.response.athlete.AthleteExtraDTO;
 import com.simada_backend.repository.athlete.AthleteExtraRepository;
+import com.simada_backend.repository.athlete.AthletePerformanceSnapshotRepository;
 import com.simada_backend.repository.coach.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -19,11 +18,11 @@ public class CoachService {
     private final CoachStatsRepository statsRepo;
     private final CoachAthletesRepository coachAthletesRepo;
     private final AthleteExtraRepository athleteExtraRepo;
-    private final RankingRepository rankingRepository;
+    private final AthletePerformanceSnapshotRepository athletePerformanceSnapshotRepository;
 
     public List<TopPerformerDTO> getTopPerformers(int limit) {
         int safe = Math.max(1, Math.min(limit, 50));
-        return rankingRepository.findTopPerformers(safe).stream()
+        return athletePerformanceSnapshotRepository.findTopPerformers(safe).stream()
                 .map(r -> new TopPerformerDTO(
                         r.getAthlete_name(),
                         r.getFoto(),

@@ -3,6 +3,7 @@ package com.simada_backend.repository.alert;
 import com.simada_backend.dto.response.alert.PerformanceAlertDTO;
 import com.simada_backend.dto.response.alert.PerformanceAnswerDTO;
 import com.simada_backend.model.session.TrainingLoadAlert;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -13,8 +14,6 @@ import java.util.Optional;
 public interface TrainingLoadAlertRepository extends CrudRepository<TrainingLoadAlert, Long> {
 
     Optional<TrainingLoadAlert> findFirstByAthlete_IdOrderByCreatedAtDesc(Long athleteId);
-
-    Optional<TrainingLoadAlert> findByAthlete_IdAndSession_Id(Long athleteId, Long sessionId);
 
     @Query("""
             SELECT new com.simada_backend.dto.response.alert.PerformanceAlertDTO(
@@ -75,4 +74,8 @@ public interface TrainingLoadAlertRepository extends CrudRepository<TrainingLoad
     );
 
     Optional<TrainingLoadAlert> findByAthleteIdAndSessionId(Long athleteId, Long sessionId);
+
+    @Modifying
+    @Query("delete from TrainingLoadAlert a where a.athlete.id = :athleteId")
+    void deleteByAthleteId(@Param("athleteId") Long athleteId);
 }

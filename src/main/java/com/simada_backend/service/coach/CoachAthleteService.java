@@ -16,7 +16,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 
@@ -24,14 +23,14 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class CoachAthleteService {
 
-    private final AthleteRepository atletaRepo;
-    private final AthleteExtraRepository extraRepo;
-    private final UserRepository usuarioRepo;
-    private final AthleteInviteRepository convRepo;
+    private final AthleteRepository athleteRepository;
+    private final AthleteExtraRepository extraRepository;
+    private final UserRepository userRepository;
+    private final AthleteInviteRepository inviteRepository;
 
     @Transactional
     public AthleteDetailDTO getAthlete(Long coachId, Long athleteId) {
-        Athlete athlete = atletaRepo.findByIdAndCoach_Id(athleteId, coachId)
+        Athlete athlete = athleteRepository.findByIdAndCoach_Id(athleteId, coachId)
                 .orElseThrow(() -> new BusinessException(
                         ErrorCode.RESOURCE_NOT_FOUND,
                         HttpStatus.NOT_FOUND,
@@ -59,7 +58,7 @@ public class CoachAthleteService {
 
     @Transactional
     public AthleteDetailDTO updateAthlete(Long coachId, Long athleteId, UpdateAthleteRequest req) {
-        Athlete athlete = atletaRepo.findByIdAndCoach_Id(athleteId, coachId)
+        Athlete athlete = athleteRepository.findByIdAndCoach_Id(athleteId, coachId)
                 .orElseThrow(() -> new BusinessException(
                         ErrorCode.RESOURCE_NOT_FOUND,
                         HttpStatus.NOT_FOUND,
@@ -84,12 +83,12 @@ public class CoachAthleteService {
                     );
                 }
             }
-            usuarioRepo.save(u);
+            userRepository.save(u);
         }
 
         // Extra
         if (req.getExtra() != null) {
-            AthleteExtra ex = extraRepo.findByAthlete_Id(athleteId).orElseGet(() -> {
+            AthleteExtra ex = extraRepository.findByAthlete_Id(athleteId).orElseGet(() -> {
                 AthleteExtra novo = new AthleteExtra();
                 novo.setAthlete(athlete);
                 return novo;
@@ -105,26 +104,26 @@ public class CoachAthleteService {
             ex.setNationality(e.nationality());
             ex.setInjuryStatus(e.injury_status());
 
-            extraRepo.save(ex);
+            extraRepository.save(ex);
             athlete.setExtra(ex);
         }
 
-        atletaRepo.save(athlete);
+        athleteRepository.save(athlete);
         return getAthlete(coachId, athleteId);
     }
 
     @Transactional
     public void deleteAthlete(Long athleteId) {
-        Athlete a = atletaRepo.findById(athleteId)
+        Athlete a = athleteRepository.findById(athleteId)
                 .orElseThrow(() -> new BusinessException(
                         ErrorCode.RESOURCE_NOT_FOUND,
                         HttpStatus.NOT_FOUND,
                         "Athlete not found."
                 ));
 
-        atletaRepo.deleteById(athleteId);
-        extraRepo.deleteById(athleteId);
-        convRepo.deleteByEmail(a.getUser().getEmail());
-        usuarioRepo.delete(a.getUser());
+        athleteRepository.deleteById(athleteId);
+        extraRepository.deleteById(athleteId);
+        inviteRepository.deleteByEmail(a.getUser().getEmail());
+        userRepository.delete(a.getUser());
     }
 }

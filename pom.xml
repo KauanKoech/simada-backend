@@ -12,7 +12,7 @@
     <artifactId>simada-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>simada-backend</name>
-    <description>Backend do Sistema Inteligente de Monitoramento e Análise de Desempenho para Atletas (SIMADA)
+    <description>Intelligent System for Monitoring Training Load, Performance and Injury Risk in Athletes Back-end
     </description>
     <url/>
     <licenses>

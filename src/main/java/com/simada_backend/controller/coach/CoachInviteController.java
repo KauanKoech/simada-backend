@@ -1,4 +1,4 @@
-package com.simada_backend.controller;
+package com.simada_backend.controller.coach;
 
 import com.simada_backend.dto.request.athlete.InviteRequest;
 import com.simada_backend.service.athlete.InviteService;

@@ -31,7 +31,6 @@ public class PerformanceService {
 
     @Transactional
     public void deleteAlert(Long alertId, Long coachId) {
-        System.out.println("Alerta Id: " + alertId + " Coach Id: " + coachId);
         TrainingLoadAlert alert = repo.findByIdAndCoach_Id(alertId, coachId)
                 .orElseThrow(() -> new BusinessException(
                         ErrorCode.RESOURCE_NOT_FOUND,

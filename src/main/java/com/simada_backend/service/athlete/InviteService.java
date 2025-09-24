@@ -1,5 +1,7 @@
 package com.simada_backend.service.athlete;
 
+import com.simada_backend.api.error.BusinessException;
+import com.simada_backend.api.error.ErrorCode;
 import com.simada_backend.model.Coach;
 import com.simada_backend.model.User;
 import com.simada_backend.model.athlete.Athlete;
@@ -49,8 +51,12 @@ public class InviteService {
     }
 
     public AthleteInvite createOrReuse(Long coachId, String email) {
-        var coach = coachRepo.findById(coachId)
-                .orElseThrow(() -> new IllegalArgumentException("Coach not found"));
+        var coach = coachRepo.findById(coachId).orElseThrow(() ->
+                new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        HttpStatus.NOT_FOUND,
+                        "Coach not found")
+        );
 
         var existing = invitationRepo.findFirstByCoach_IdAndEmailAndStatus(coachId, email, InviteStatus.PENDING)
                 .orElse(null);
@@ -72,7 +78,8 @@ public class InviteService {
             sendEmail(inv, coach.getName());
             return inv;
         } catch (DataIntegrityViolationException e) {
-            throw new ResponseStatusException(
+            throw new BusinessException(
+                    ErrorCode.CONSTRAINT_VIOLATION,
                     HttpStatus.BAD_REQUEST,
                     "This athlete was already invited by the coach."
             );
@@ -94,11 +101,15 @@ public class InviteService {
             var helper = new MimeMessageHelper(msg, true, "UTF-8");
             helper.setFrom(from);
             helper.setTo(inv.getEmail());
-            helper.setSubject("Convite para o Wiko");
+            helper.setSubject("WIKO Invite");
             helper.setText(html, true);
             mailSender.send(msg);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send email", e);
+            throw new BusinessException(
+                    ErrorCode.INTERNAL_ERROR,
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to send email"
+            );
         }
     }
 
@@ -106,15 +117,28 @@ public class InviteService {
     }
 
     public InviteInfo validateToken(String token) {
-        var inv = invitationRepo.findByToken(token)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid invite"));
-        if (inv.getStatus() != InviteStatus.PENDING) throw new IllegalStateException("Invite no longer valid");
+        var inv = invitationRepo.findByToken(token).orElseThrow(() ->
+                new BusinessException(
+                        ErrorCode.TOKEN_INVALID,
+                        HttpStatus.BAD_REQUEST,
+                        "Invalid invite token")
+        );
+        if (inv.getStatus() != InviteStatus.PENDING) {
+            throw new BusinessException(
+                    ErrorCode.TOKEN_INVALID,
+                    HttpStatus.GONE,
+                    "Invite no longer valid"
+            );
+        }
         if (inv.getExpiresAt().isBefore(LocalDateTime.now())) {
             inv.setStatus(InviteStatus.EXPIRED);
             invitationRepo.save(inv);
-            throw new IllegalStateException("Invite expired");
+            throw new BusinessException(
+                    ErrorCode.TOKEN_EXPIRED,
+                    HttpStatus.GONE,
+                    "Invite expired"
+            );
         }
-        System.out.println("COACH NAME: " + inv.getCoach().getName());
         return new InviteInfo(inv.getEmail(), inv.getCoach().getName());
     }
 
@@ -122,18 +146,38 @@ public class InviteService {
     public Long completeInvite(String token, String name, String passwordHash,
                                String phone, LocalDate birth, String position) {
 
-        AthleteInvite inv = invitationRepo.findByToken(token)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid invite token"));
+        var inv = invitationRepo.findByToken(token).orElseThrow(() ->
+                new BusinessException(
+                        ErrorCode.TOKEN_INVALID,
+                        HttpStatus.BAD_REQUEST,
+                        "Invalid invite token")
+        );
 
-        if (inv.getStatus().equals(InviteStatus.ACCEPTED) || inv.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("Invite expired or already used");
+        if (inv.getStatus() == InviteStatus.ACCEPTED) {
+            throw new BusinessException(
+                    ErrorCode.TOKEN_INVALID,
+                    HttpStatus.GONE,
+                    "Invite already used"
+            );
         }
-
+        if (inv.getExpiresAt().isBefore(LocalDateTime.now())) {
+            inv.setStatus(InviteStatus.EXPIRED);
+            invitationRepo.save(inv);
+            throw new BusinessException(
+                    ErrorCode.TOKEN_EXPIRED,
+                    HttpStatus.GONE,
+                    "Invite expired"
+            );
+        }
         if (userRepo.existsByEmail(inv.getEmail())) {
-            throw new IllegalStateException("User already exists with this email");
+            throw new BusinessException(
+                    ErrorCode.EMAIL_IN_USE,
+                    HttpStatus.CONFLICT,
+                    "User already exists with this email"
+            );
         }
 
-        // 1) Usuario
+        //User
         User u = new User();
         u.setEmail(inv.getEmail());
         u.setName(name);
@@ -145,7 +189,7 @@ public class InviteService {
 
         Coach coach = coachRepo.getReferenceById(inv.getCoach().getId());
 
-        // 2) Atleta (minimize NOT NULLs)
+        //Athlete
         Athlete a = new Athlete();
         a.setUser(u);
         a.setId(u.getId());
@@ -156,7 +200,7 @@ public class InviteService {
         }
         a = athleteRepo.save(a);
 
-        // 3) Convite
+        //Invite
         inv.setStatus(InviteStatus.ACCEPTED);
         inv.setAcceptedAt(LocalDateTime.now());
         invitationRepo.save(inv);

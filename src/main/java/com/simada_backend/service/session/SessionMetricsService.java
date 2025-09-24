@@ -30,7 +30,6 @@ import org.apache.commons.csv.CSVRecord;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 
 import jakarta.transaction.Transactional;
@@ -51,19 +50,19 @@ import static com.simada_backend.utils.PerformanceLabelUtils.*;
 @RequiredArgsConstructor
 public class SessionMetricsService {
 
-    private final SessionLoadRepo sessionLoadRepo;
-    private final CoachSessionsRepository sessionsRepo;
-    private final MetricsRepository metricasRepo;
-    private final AthleteRepository atletaRepo;
-    private final CoachRepository coachRepo;
+    private final SessionLoadRepo loadRepo;
+    private final CoachSessionsRepository coachSessionsRepository;
+    private final MetricsRepository metricsRepository;
+    private final AthleteRepository athleteRepository;
+    private final CoachRepository coachRepository;
     private final WeeklyLoadQueryRepository weeklyLoadQueryRepository;
     private final TrainingLoadAlertRepository trainingLoadAlertRepository;
     private final RankingRepository rankingRepository;
 
     @Transactional
     public void importMetricsFromCsv(int sessionId, MultipartFile file) throws CsvParsingException {
-        // 1) Load session
-        Session session = sessionsRepo.findById(sessionId)
+        // Load session
+        Session session = coachSessionsRepository.findById(sessionId)
                 .orElseThrow(() -> new BusinessException(
                         ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Session not found."
                 ));
@@ -71,7 +70,7 @@ public class SessionMetricsService {
         Coach sessionCoach = session.getCoach();
         Long coachId = (sessionCoach != null ? sessionCoach.getId() : null);
 
-        // 2) Read all file
+        // Read all file
         final String content;
         try (InputStream in = file.getInputStream()) {
             content = new String(in.readAllBytes(), StandardCharsets.UTF_8);
@@ -83,7 +82,7 @@ public class SessionMetricsService {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, HttpStatus.BAD_REQUEST, "Empty file.");
         }
 
-        // 3) Detect delimiter
+        // Detect delimiter
         char delimiter = detectDelimiter(firstNonEmptyLine(content));
         CSVFormat format = CSVFormat.DEFAULT.builder()
                 .setDelimiter(delimiter)
@@ -158,7 +157,7 @@ public class SessionMetricsService {
                 }
 
                 // Resolve athlete (repo -> by name+dorsal, name, dorsal)
-                Athlete athlete = resolveAtletaRepo(playerName, dorsal);
+                Athlete athlete = resolveAthlete(playerName, dorsal);
                 if (athlete == null) {
                     throw new BusinessException(ErrorCode.VALIDATION_ERROR, HttpStatus.BAD_REQUEST,
                             "Line " + row + ": athlete '" + playerName +
@@ -218,7 +217,7 @@ public class SessionMetricsService {
                 Long sessionIdLong = session.getId() == null ? null : session.getId().longValue();
                 Long athleteIdLong = athlete.getId();
 
-                SessionLoad load = sessionLoadRepo
+                SessionLoad load = loadRepo
                         .findBySessionIdAndAthleteId(sessionIdLong, athleteIdLong)
                         .orElseGet(SessionLoad::new);
 
@@ -230,7 +229,7 @@ public class SessionMetricsService {
                 load.setLoadSource(Enum.valueOf(LoadSource.class, calc.loadSource));
                 load.setFormulaVersion(calc.formulaVersion);
                 load.setParamsJson(calc.paramsJson);
-                sessionLoadRepo.save(load);
+                loadRepo.save(load);
 
                 int newCount = importCountByAthlete.merge(athleteIdLong, 1, Integer::sum);
                 if (newCount % 2 == 0) {
@@ -241,11 +240,11 @@ public class SessionMetricsService {
             }
 
             // Persist all metrics
-            metricasRepo.saveAll(batch);
+            metricsRepository.saveAll(batch);
 
             // Update session num_athletes
             session.setNumAthletes(distinctAthleteIds.size());
-            sessionsRepo.save(session);
+            coachSessionsRepository.save(session);
 
             final Long sessionIdLong = session.getId() == null ? null : session.getId().longValue();
             final Long coachIdLong = (sessionCoach != null ? sessionCoach.getId() : null);
@@ -282,13 +281,13 @@ public class SessionMetricsService {
                         .isPresent();
                 if (exists) continue;
 
-                Athlete athlete = atletaRepo.findById(aid)
+                Athlete athlete = athleteRepository.findById(aid)
                         .orElseThrow(() -> new BusinessException(
                                 ErrorCode.RESOURCE_NOT_FOUND,
                                 HttpStatus.NOT_FOUND,
                                 "Athlete not found."
                         ));
-                Coach coach = coachRepo.findById(coachId)
+                Coach coach = coachRepository.findById(coachId)
                         .orElseThrow(() -> new BusinessException(
                                 ErrorCode.RESOURCE_NOT_FOUND,
                                 HttpStatus.NOT_FOUND,
@@ -317,7 +316,7 @@ public class SessionMetricsService {
                 int points = Math.max(0, rawPoints);
 
                 Athlete athleteEntity = athleteCache.computeIfAbsent(aid, id ->
-                        atletaRepo.findById(id).orElseThrow(() ->
+                        athleteRepository.findById(id).orElseThrow(() ->
                                 new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Athlete not found.")));
 
                 var snap = new AthletePerformanceSnapshot();
@@ -361,7 +360,7 @@ public class SessionMetricsService {
         if (description == null) {
             description = "";
         }
-        Session s = sessionsRepo.findById(sessionId)
+        Session s = coachSessionsRepository.findById(sessionId)
                 .orElseThrow(() -> new BusinessException(
                         ErrorCode.RESOURCE_NOT_FOUND,
                         HttpStatus.NOT_FOUND,
@@ -372,7 +371,7 @@ public class SessionMetricsService {
 
     @Transactional
     public SessionDTO updateSession(int id, UpdateSessionRequest req) {
-        Session s = sessionsRepo.findById(id)
+        Session s = coachSessionsRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(
                         ErrorCode.RESOURCE_NOT_FOUND,
                         HttpStatus.NOT_FOUND,
@@ -413,7 +412,7 @@ public class SessionMetricsService {
             s.setLocal(req.location());
         }
 
-        Session saved = sessionsRepo.save(s);
+        Session saved = coachSessionsRepository.save(s);
 
         // monta resposta no formato do app (type em "Training"/"Game")
         return new SessionDTO(
@@ -538,21 +537,25 @@ public class SessionMetricsService {
         return s == null ? null : s.trim();
     }
 
-    private Athlete resolveAtletaRepo(String playerName, Integer dorsal) {
+    private Athlete resolveAthlete(String playerName, Integer dorsal) {
         Athlete a = null;
         if (playerName != null && dorsal != null) {
-            a = atletaRepo.findFirstByNameIgnoreCaseAndJerseyNumber(playerName, dorsal).orElse(null);
+            a = athleteRepository.findFirstByNameIgnoreCaseAndJerseyNumber(playerName, dorsal).orElse(null);
         }
         if (a == null && playerName != null) {
-            a = atletaRepo.findFirstByNameIgnoreCase(playerName).orElse(null);
+            a = athleteRepository.findFirstByNameIgnoreCase(playerName).orElse(null);
         }
         if (a == null && dorsal != null) {
-            List<Athlete> byNumber = atletaRepo.findByJerseyNumber(dorsal);
+            List<Athlete> byNumber = athleteRepository.findByJerseyNumber(dorsal);
             if (byNumber.size() == 1) a = byNumber.get(0);
         }
         if (a == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Atleta não encontrado: " + playerName + (dorsal != null ? (" (#" + dorsal + ")") : ""));
+            throw new BusinessException(
+                    ErrorCode.RESOURCE_NOT_FOUND,
+                    HttpStatus.NOT_FOUND,
+                    "Athlete not found: " + playerName +
+                            (dorsal != null ? (" (#" + dorsal + ")") : "")
+            );
         }
         return a;
     }
@@ -563,6 +566,7 @@ public class SessionMetricsService {
             case "treino":
                 return "Training";
             case "jogo":
+                return "Game";
             case "game":
                 return "Game";
             default:
@@ -578,9 +582,10 @@ public class SessionMetricsService {
                 // ISO datetime -> pega a data
                 return OffsetDateTime.parse(raw).toLocalDate();
             } catch (DateTimeParseException e2) {
-                throw new ResponseStatusException(
+                throw new BusinessException(
+                        ErrorCode.VALIDATION_ERROR,
                         HttpStatus.BAD_REQUEST,
-                        "Formato inválido para 'date' (use YYYY-MM-DD ou ISO datetime)"
+                        "Invalid format for 'date' (use YYYY-MM-DD or full ISO datetime)"
                 );
             }
         }

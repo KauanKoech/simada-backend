@@ -28,7 +28,6 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class AIRecommendationAlertService {
 
-    //private final GroqClient groqClient;
     private final PsyRecommendationRepository psyRecommendationRepository;
     private final PerfRecommendationRepository perfRecommendationRepository;
     private final SessionRepository sessionRepository;
@@ -105,8 +104,12 @@ public class AIRecommendationAlertService {
                 // Se vier vazio/nulo, considera erro para acionar onErrorResume -> fallback
                 .flatMap(text -> (text != null && !text.isBlank())
                         ? Mono.just(saveAndReturnPsychoRec(sessionId, athleteId, finalCoachId, req, text, PsyRecommendation.Source.groq))
-                        : Mono.error(new IllegalStateException("Empty response from Groq")))
-                // Erros (timeout, 4xx/5xx, vazio) -> fallback
+                        : Mono.error(new BusinessException(
+                        ErrorCode.INTERNAL_ERROR,
+                        HttpStatus.BAD_GATEWAY,
+                        "Empty response from Groq LLM"
+                )))
+                // Error (timeout, 4xx/5xx, vazio) -> fallback
                 .onErrorResume(ex -> {
                     String fb = psyFallback(req);
                     return Mono.just(saveAndReturnPsychoRec(sessionId, athleteId, finalCoachId, req, fb, PsyRecommendation.Source.fallback));
@@ -178,8 +181,12 @@ public class AIRecommendationAlertService {
                 // Se vier vazio/nulo, considera erro para acionar onErrorResume -> fallback
                 .flatMap(text -> (text != null && !text.isBlank())
                         ? Mono.just(saveAndReturnPerfRec(sessionId, athleteId, finalCoachId, req, text, PerfRecommendation.Source.groq))
-                        : Mono.error(new IllegalStateException("Empty response from Groq")))
-                // Erros (timeout, 4xx/5xx, vazio) -> fallback
+                        : Mono.error(new BusinessException(
+                        ErrorCode.INTERNAL_ERROR,
+                        HttpStatus.BAD_GATEWAY,
+                        "Empty response from Groq LLM"
+                )))
+                // Error (timeout, 4xx/5xx, vazio) -> fallback
                 .onErrorResume(ex -> {
                     String fb = perfFallback(req);
                     return Mono.just(saveAndReturnPerfRec(sessionId, athleteId, finalCoachId, req, fb, PerfRecommendation.Source.fallback));
@@ -216,7 +223,7 @@ public class AIRecommendationAlertService {
                 .soreness(req.soreness())
                 .mood(req.mood())
                 .energy(req.energy())
-                .createdAt(Instant.now()) // opcional (há @PrePersist)
+                .createdAt(Instant.now())
                 .build();
 
         return saveBlockingPsycho(rec).getText();
@@ -251,7 +258,7 @@ public class AIRecommendationAlertService {
                 .monotony(req.monotony())
                 .strain(req.strain())
                 .pctQwUp(req.pctQwUp())
-                .createdAt(Instant.now()) // opcional
+                .createdAt(Instant.now())
                 .build();
 
         return saveBlockingPerf(rec).getText();
@@ -267,7 +274,6 @@ public class AIRecommendationAlertService {
                     try {
                         return psyRecommendationRepository.save(rec);
                     } catch (org.springframework.dao.DataIntegrityViolationException e) {
-                        // corrida na UNIQUE(session_id, athlete_id): retorna o existente
                         return psyRecommendationRepository
                                 .findBySession_IdAndAthlete_Id(sessionId, athleteId)
                                 .orElseThrow(() -> e);
@@ -285,7 +291,6 @@ public class AIRecommendationAlertService {
                     try {
                         return perfRecommendationRepository.save(rec);
                     } catch (org.springframework.dao.DataIntegrityViolationException e) {
-                        // corrida na UNIQUE(session_id, athlete_id): retorna o existente
                         return perfRecommendationRepository
                                 .findBySession_IdAndAthlete_Id(sessionId, athleteId)
                                 .orElseThrow(() -> e);

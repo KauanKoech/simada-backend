@@ -25,11 +25,11 @@ public class CoachService {
         int safe = Math.max(1, Math.min(limit, 50));
         return rankingRepository.findTopPerformers(safe).stream()
                 .map(r -> new TopPerformerDTO(
-                        r.getNome_atleta(),
+                        r.getAthlete_name(),
                         r.getFoto(),
-                        r.getData_atualizacao(),
-                        r.getPontuacao(),
-                        r.getUltima_pontuacao()
+                        r.getDate(),
+                        r.getScore(),
+                        r.getLast_score()
                 ))
                 .toList();
     }

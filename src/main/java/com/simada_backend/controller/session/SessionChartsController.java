@@ -15,7 +15,6 @@ public class SessionChartsController {
 
     private final SessionChartsService service;
 
-    // GET /api/sessions/{sessionId}/athletes
     @GetMapping(value = "/{sessionId}/athletes", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<SessionMetricsQueryRepository.AthleteListRow> listAthletes(@PathVariable Long sessionId) {
         return service.listAthletes(sessionId);
@@ -35,7 +34,6 @@ public class SessionChartsController {
         if (athleteId != null) {
             return service.listMetricsForAthlete(sessionId, athleteId);
         }
-        // default seguro: retorna do time
         return service.listMetricsForTeam(sessionId);
     }
 }

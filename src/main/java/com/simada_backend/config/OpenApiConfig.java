@@ -12,8 +12,9 @@ public class OpenApiConfig {
     public OpenAPI simadaOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("SIMADA API")
+                        .title("WIKO API")
                         .version("v1.0")
-                        .description("Documentação da API do Sistema de Monitoramento de Atletas de Desempenho Avançado"));
+                        .description("\n" +
+                                "Intelligent System for Monitoring Training Load, Performance and Injury Risk in Athletes API Documentation"));
     }
 }

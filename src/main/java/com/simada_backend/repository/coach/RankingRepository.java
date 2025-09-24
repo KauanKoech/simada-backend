@@ -47,11 +47,11 @@ public interface RankingRepository extends CrudRepository<AthletePerformanceSnap
               WHERE r.rn = 1
             )
             SELECT
-              a.name                                  AS nome_atleta,
-              u.photo                                 AS foto,
-              l.as_of                                 AS data_atualizacao,
-              CAST(l.points AS DOUBLE)                AS pontuacao,
-              CAST(COALESCE(l.last_points, 0) AS DOUBLE) AS ultima_pontuacao
+              a.name                                  AS athlete_name,
+              u.photo                                 AS photo,
+              l.as_of                                 AS date,
+              CAST(l.points AS DOUBLE)                AS score,
+              CAST(COALESCE(l.last_points, 0) AS DOUBLE) AS last_score
             FROM latest l
             JOIN athlete a ON a.id = l.athlete_id
             LEFT JOIN `user` u ON u.id = a.id_user
@@ -60,15 +60,15 @@ public interface RankingRepository extends CrudRepository<AthletePerformanceSnap
             """, nativeQuery = true)
     List<TopPerformerRow> findTopPerformers(@Param("limit") int limit);
 
-    public interface TopPerformerRow {
-        String getNome_atleta();
+    interface TopPerformerRow {
+        String getAthlete_name();
 
         String getFoto();
 
-        LocalDateTime getData_atualizacao();
+        LocalDateTime getDate();
 
-        Double getPontuacao();
+        Double getScore();
 
-        Double getUltima_pontuacao();
+        Double getLast_score();
     }
 }

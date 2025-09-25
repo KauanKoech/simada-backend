@@ -12,7 +12,7 @@ public interface MetricsRepository extends JpaRepository<Metrics, Long> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional
     @Query("DELETE FROM Metrics m WHERE m.session.id = :sessionId")
-    int deleteBySessionId(@Param("sessionId") Integer sessionId);
+    int deleteBySessionId(@Param("sessionId") Long sessionId);
 
     @Query(value = "SELECT DISTINCT m.id_athlete FROM metrics m WHERE m.id_session = :sessionId", nativeQuery = true)
     List<Long> findAthletesBySessionId(@Param("sessionId") Long sessionId);

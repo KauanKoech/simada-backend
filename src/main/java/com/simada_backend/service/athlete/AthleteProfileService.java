@@ -165,11 +165,9 @@ public class AthleteProfileService {
         loadAlertRepo.deleteByAthleteId(athleteId);
         metricsRepository.deleteByAthleteId(athleteId);
 
-        //Por último, o próprio atleta
         athleteRepository.deleteById(athleteId);
     }
 
-    // util
     private String OptionalExtension(String original) {
         if (original == null) return "";
         int i = original.lastIndexOf('.');

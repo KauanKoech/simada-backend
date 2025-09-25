@@ -14,4 +14,8 @@ public interface SessionLoadRepo extends JpaRepository<SessionLoad, Long> {
     @Modifying
     @Query("delete from SessionLoad s where s.athlete.id = :athleteId")
     void deleteByAthleteId(@Param("athleteId") Long athleteId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from SessionLoad sl where sl.session.id = :sessionId")
+    void deleteBySessionId(@Param("sessionId") Long sessionId);
 }

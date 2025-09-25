@@ -78,4 +78,8 @@ public interface TrainingLoadAlertRepository extends CrudRepository<TrainingLoad
     @Modifying
     @Query("delete from TrainingLoadAlert a where a.athlete.id = :athleteId")
     void deleteByAthleteId(@Param("athleteId") Long athleteId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from TrainingLoadAlert a where a.session.id = :sessionId")
+    void deleteBySessionId(@Param("sessionId") Long sessionId);
 }

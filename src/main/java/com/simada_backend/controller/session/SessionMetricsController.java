@@ -7,6 +7,7 @@ import com.simada_backend.service.loadCalc.CsvParsingException;
 import com.simada_backend.service.session.SessionMetricsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -43,5 +44,12 @@ public class SessionMetricsController {
     ) {
         SessionDTO updated = service.updateSession(id, body);
         return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{sessionId}/metrics")
+    public ResponseEntity<Void> deleteSessionMetrics(@PathVariable Long sessionId,
+                                                     @RequestParam Long coachId) {
+        service.deleteSessionMetrics(sessionId, coachId);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -90,7 +90,7 @@ public class SessionService {
         Session s = sessionsRepo.findById(sessionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sessão não encontrada"));
 
-        metricasRepo.deleteBySessionId(sessionId);
+        metricasRepo.deleteBySessionId(Long.valueOf(sessionId));
         sessionsRepo.delete(s);
     }
 }

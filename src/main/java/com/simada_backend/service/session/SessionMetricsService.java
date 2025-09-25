@@ -18,6 +18,8 @@ import com.simada_backend.repository.coach.CoachRepository;
 import com.simada_backend.repository.athlete.AthletePerformanceSnapshotRepository;
 import com.simada_backend.repository.loadCalc.SessionLoadRepo;
 import com.simada_backend.repository.loadCalc.WeeklyLoadQueryRepository;
+import com.simada_backend.repository.session.SessionMetricsQueryRepository;
+import com.simada_backend.repository.session.SessionRepository;
 import com.simada_backend.service.loadCalc.*;
 import com.simada_backend.repository.athlete.AthleteRepository;
 import com.simada_backend.repository.session.MetricsRepository;
@@ -51,6 +53,7 @@ import static com.simada_backend.utils.PerformanceLabelUtils.*;
 public class SessionMetricsService {
 
     private final SessionLoadRepo loadRepo;
+    private final SessionRepository sessionRepository;
     private final CoachSessionsRepository coachSessionsRepository;
     private final MetricsRepository metricsRepository;
     private final AthleteRepository athleteRepository;
@@ -354,7 +357,6 @@ public class SessionMetricsService {
         }
     }
 
-
     @Transactional
     public void updateSessionNotes(int sessionId, String description) {
         if (description == null) {
@@ -427,6 +429,30 @@ public class SessionMetricsService {
                 saved.getDescription(),
                 saved.getLocal()
         );
+    }
+
+    @Transactional
+    public void deleteSessionMetrics(Long sessionId, Long coachId) {
+        // 1) valida sessão e posse
+        var session = sessionRepository.findById(sessionId.intValue()).orElseThrow(() ->
+                new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND,
+                        "Session not found: id=" + sessionId
+                )
+        );
+        Long ownerCoachId = sessionRepository.findCoachIdBySessionId(sessionId);
+        if (ownerCoachId == null || !ownerCoachId.equals(coachId)) {
+            throw new BusinessException(
+                    ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN,
+                    "You do not have permission to modify this session."
+            );
+        }
+
+        trainingLoadAlertRepository.deleteBySessionId(sessionId);
+
+        loadRepo.deleteBySessionId(sessionId);
+
+        metricsRepository.deleteBySessionId(sessionId);
     }
 
     /* ------------ helpers ------------- */

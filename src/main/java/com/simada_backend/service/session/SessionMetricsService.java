@@ -242,10 +242,8 @@ public class SessionMetricsService {
                 }
             }
 
-            // Persist all metrics
             metricsRepository.saveAll(batch);
 
-            // Update session num_athletes
             session.setNumAthletes(distinctAthleteIds.size());
             coachSessionsRepository.save(session);
 
@@ -264,12 +262,10 @@ public class SessionMetricsService {
 
                 var r = rows.get(rows.size() - 1);
 
-                // Classify
                 String acwrL = Labels.acwrLabel(toDouble(r.getAcwr()));
                 String pctQwUpL = Labels.pctQwUpLabel(toDouble(r.getPctQwUp()));
                 String monoL = Labels.monotonyLabel(toDouble(r.getMonotony()));
                 String strainL = Labels.strainLabel(toDouble(r.getStrain()));
-
                 boolean hasAlert =
                         isAttentionOrRisk(acwrL) ||
                                 isAttentionOrRisk(pctQwUpL) ||
@@ -278,7 +274,6 @@ public class SessionMetricsService {
 
                 if (!hasAlert) continue;
 
-                // Avoid duplicate alert for the same athlete in this session
                 boolean exists = trainingLoadAlertRepository
                         .findByAthleteIdAndSessionId(aid, sessionIdLong)
                         .isPresent();
@@ -312,6 +307,7 @@ public class SessionMetricsService {
                         .strainLabel(strainL)
                         .createdAt(Instant.now())
                         .build();
+                System.out.println("Alert: " + alert);
                 trainingLoadAlertRepository.save(alert);
 
                 int rawPoints =
@@ -464,7 +460,7 @@ public class SessionMetricsService {
     private static boolean isAttentionOrRisk(String label) {
         if (label == null) return false;
         return switch (label) {
-            case "atenção", "risco", "alto_risco" -> true;
+            case "attention", "risk", "high_risk" -> true;
             default -> false;
         };
     }

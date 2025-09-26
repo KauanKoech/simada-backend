@@ -145,10 +145,10 @@ public class AIRecommendationAlertService {
                   "Please seek professional medical support if symptoms persist or worsen."
                 
                 Labels guide (use only to guide advice, do not restate thresholds):
-                - ACWR labels: baixo, ótimo, atenção, risco.
-                - %%↑QW labels: queda_forte, estável, atenção, risco.
-                - Monotony labels: saudável, atenção, alto_risco.
-                - Strain labels: baixo, atenção, alto_risco.
+                - ACWR labels: low, optimal, attention, risk.
+                - %%↑QW labels: sharp_drop, stable, attention, risk.
+                - Monotony labels: healthy, attention, high_risk.
+                - Strain labels: low, attention, high_risk.
                 """;
 
 
@@ -347,19 +347,19 @@ public class AIRecommendationAlertService {
         if (r.acwr() != null) {
             sb.append("### ACWR\n");
             switch (acwrL) {
-                case "risco" -> {
+                case "risk" -> {
                     sb.append("- Reduce **next-week volume by 10–20%**, cap high-intensity exposures, and avoid single-session load peaks.\n");
                     sb.append("- Distribute intensity more evenly across the week; consider an **easy/recovery day**.\n");
                 }
-                case "atenção" -> {
+                case "attention" -> {
                     sb.append("- Keep **weekly increments <10%** and avoid adding extra conditioning blocks this week.\n");
                     sb.append("- Monitor daily wellness/RPE and schedule one **lower-load session** to buffer accumulation.\n");
                 }
-                case "baixo" -> {
+                case "low" -> {
                     sb.append("- **Rebuild gradually**: increase total load by 5–10% next week with emphasis on technical quality.\n");
                     sb.append("- Maintain at least one **moderate session** to progress toward the optimal range.\n");
                 }
-                default /* ótimo / indisponível */ -> {
+                default -> {
                     sb.append("- Maintain **stable progression** (<10%); keep balanced intensity distribution.\n");
                     sb.append("- Continue daily recovery hygiene (sleep, hydration) and standard monitoring.\n");
                 }
@@ -371,15 +371,15 @@ public class AIRecommendationAlertService {
         if (r.pctQwUp() != null) {
             sb.append("### Weekly Load Change (%%↑QW)\n");
             switch (pctL) {
-                case "risco" -> {
+                case "risk" -> {
                     sb.append("- Pull **weekly change back to ±10%**: remove optional extras and add one **easy/recovery day**.\n");
                     sb.append("- Limit sharp spikes (e.g., back-to-back high-intensity days); split workloads.\n");
                 }
-                case "atenção" -> {
+                case "attention" -> {
                     sb.append("- Keep increments **≤10%** and watch post-session responses; avoid stacking intense drills.\n");
                     sb.append("- If fatigue signs appear, trim session duration slightly or extend rest intervals.\n");
                 }
-                case "queda_forte" -> {
+                case "sharp_drop" -> {
                     sb.append("- **Progressively rebuild** after the drop: add 5–10% with quality work and appropriate rest.\n");
                     sb.append("- Keep intensity controlled; prioritize consistency over single hard sessions.\n");
                 }
@@ -395,11 +395,11 @@ public class AIRecommendationAlertService {
         if (r.monotony() != null) {
             sb.append("### Monotony\n");
             switch (monoL) {
-                case "alto_risco" -> {
+                case "high_risk" -> {
                     sb.append("- Reduce **monotony**: vary session focus (volume/intensity), insert a **rest/low day** this week.\n");
                     sb.append("- Diversify drills (e.g., technical vs. conditioning) to avoid repetitive stress.\n");
                 }
-                case "atenção" -> {
+                case "attention" -> {
                     sb.append("- Introduce **variation** in intensity zones and drill selection within the week.\n");
                     sb.append("- Avoid identical back-to-back sessions; tweak density and duration.\n");
                 }
@@ -415,15 +415,15 @@ public class AIRecommendationAlertService {
         if (r.strain() != null) {
             sb.append("### Strain\n");
             switch (strainL) {
-                case "alto_risco" -> {
+                case "high_risk" -> {
                     sb.append("- Manage **strain**: shorten sets, lower density, extend recovery windows; consider active recovery.\n");
                     sb.append("- De-emphasize high-impact drills for 2–3 days and reassess readiness.\n");
                 }
-                case "atenção" -> {
+                case "attention" -> {
                     sb.append("- Slightly reduce session density or total volume; add mobility and recovery practices.\n");
                     sb.append("- Monitor next-day freshness; avoid pairing intense sessions consecutively.\n");
                 }
-                default /* baixo / indisponível */ -> {
+                default-> {
                     sb.append("- Maintain appropriate load; small progressions are acceptable if other metrics are controlled.\n");
                     sb.append("- Keep standard recovery hygiene and monitoring routine.\n");
                 }
@@ -432,9 +432,9 @@ public class AIRecommendationAlertService {
         }
 
         // Combinações críticas (opcional, mantém uma regra combinada no final)
-        boolean highACWR = "risco".equals(acwrL);
-        boolean highMono = "alto_risco".equals(monoL);
-        boolean highStr = "alto_risco".equals(strainL);
+        boolean highACWR = "risk".equals(acwrL);
+        boolean highMono = "high_risk".equals(monoL);
+        boolean highStr = "high_risk".equals(strainL);
         if ((r.acwr() != null || r.monotony() != null || r.strain() != null) && ((highACWR && highMono) || (highACWR && highStr) || (highMono && highStr))) {
             sb.append("- **Combination note**: apply a short **deload** (3–5 days) and monitor **daily** (wellness/RPE); reintroduce intensity only once indices normalize.\n\n");
         }

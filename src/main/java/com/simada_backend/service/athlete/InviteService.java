@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mail.javamail.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.security.SecureRandom;
 import java.time.LocalDate;
@@ -87,10 +88,16 @@ public class InviteService {
     }
 
     private void sendEmail(AthleteInvite inv, String coachName) {
-        String url = appFrontUrl + "/signup?invite=" + inv.getToken();
+        String url = UriComponentsBuilder
+                .fromHttpUrl(appFrontUrl)
+                .path("/signup")
+                .queryParam("invite", inv.getToken())
+                .build()
+                .toUriString();
+
         String html = """
                 <div style="font-family:sans-serif">
-                  <p>You have been invited by <b>%s</b> to register at Wiko.</p>
+                  <p>Você foi convidado por <b>%s</b> para se registrar no WIKO.</p>
                   <p>Clique para criar sua conta: <a href="%s">%s</a></p>
                   <p>Convite expira em %s.</p>
                 </div>

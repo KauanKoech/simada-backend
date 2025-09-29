@@ -1,4 +1,3 @@
-# application.yml (padrão, comum a todos os perfis)
 spring:
   ai:
     openai:
@@ -14,18 +13,21 @@ app:
   security:
     jwt:
       secret: ${JWT_SECRET}
-      expiration: ${JWT_EXPIRATION:3600000} # 1h default
+      expiration: ${JWT_EXPIRATION:3600000}
       issuer: ${JWT_ISSUER:WIKO}
 
 server:
-  port: ${PORT:8080}  # Render define PORT em runtime
+  port: ${PORT:8080}
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://simada-frontend.vercel.app}
 
 ---
-# Perfil de PRODUÇÃO
 spring:
   config:
     activate:
       on-profile: prod
+
   mail:
     host: ${SPRING_MAIL_HOST}
     port: ${SPRING_MAIL_PORT:587}
@@ -34,16 +36,13 @@ spring:
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
-  app:
-    mail:
-      from: ${APP_MAIL_FROM}
-    invite:
-      ttl-days: ${APP_INVITE_TTL_DAYS:7}
+
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
     hibernate:
       ddl-auto: validate
@@ -51,11 +50,17 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         jdbc.time_zone: UTC
+
   flyway:
     enabled: true
     url: ${SPRING_DATASOURCE_URL}
     user: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
 
-cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://simada-frontend.vercel.app/}
+app:
+  front:
+    url: ${APP_FRONT_URL}
+  mail:
+    from: ${APP_MAIL_FROM:no-reply@wiko.com}
+  invite:
+    ttl-days: ${APP_INVITE_TTL_DAYS:7}

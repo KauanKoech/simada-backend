@@ -1,3 +1,4 @@
+# application.yml (padrão, comum a todos os perfis)
 spring:
   ai:
     openai:
@@ -8,9 +9,40 @@ spring:
           model: llama-3.3-70b-versatile
           temperature: 0.2
           max-tokens: 400
+
 app:
   security:
     jwt:
       secret: ${JWT_SECRET}
-      expiration: 3600000
-      issuer: "WIKO"
+      expiration: ${JWT_EXPIRATION:3600000} # 1h default
+      issuer: ${JWT_ISSUER:WIKO}
+
+server:
+  port: ${PORT:8080}  # Render define PORT em runtime
+
+---
+# Perfil de PRODUÇÃO
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+    url: ${SPRING_DATASOURCE_URL}
+    user: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://simada-frontend.vercel.app/}

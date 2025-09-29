@@ -15,7 +15,7 @@ import java.util.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/psycho-form")
+@RequestMapping("/psycho-form")
 @CrossOrigin(origins = "http://localhost:3000")
 public class PsychoFormController {
 

@@ -9,7 +9,7 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/api/alerts")
+@RequestMapping("/alerts")
 @CrossOrigin(origins = "http://localhost:3000")
 public class PsychoAlertController {
 

@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/coach/profile")
+@RequestMapping("/coach/profile")
 @CrossOrigin(origins = "http://localhost:3000")
 @RequiredArgsConstructor
 public class CoachProfileController {

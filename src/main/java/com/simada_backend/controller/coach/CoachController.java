@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/coach")
+@RequestMapping("/coach")
 @CrossOrigin(origins = "http://localhost:3000")
 public class CoachController {
 

@@ -12,7 +12,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/session")
+@RequestMapping("/session")
 @CrossOrigin(origins = "http://localhost:3000")
 public class SessionCoachController {
 

@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/sessions")
+@RequestMapping("/sessions")
 public class SessionChartsController {
 
     private final SessionChartsService service;

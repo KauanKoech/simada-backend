@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/athletes")
+@RequestMapping("/athletes")
 @CrossOrigin(origins = "http://localhost:3000")
 @RequiredArgsConstructor
 public class PeerAthleteController {

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/coach/sessions")
+@RequestMapping("/coach/sessions")
 @CrossOrigin(origins = "http://localhost:3000")
 @RequiredArgsConstructor
 public class SessionMetricsController {

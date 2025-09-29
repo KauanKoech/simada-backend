@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/")
 @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class CoachInviteController {
     private final InviteService inviteService;

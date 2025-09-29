@@ -35,8 +35,6 @@ spring:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
   app:
-    front:
-      url: ${APP_FRONT_URL:https://seu-front-no-vercel.vercel.app}
     mail:
       from: ${APP_MAIL_FROM}
     invite:
@@ -48,7 +46,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect

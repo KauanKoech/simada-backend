@@ -1,10 +1,8 @@
 package com.simada_backend.controller.athlete;
 
-import com.simada_backend.controller.coach.CoachProfileController;
 import com.simada_backend.dto.request.athlete.UpdateAthleteProfileRequest;
 import com.simada_backend.dto.request.athlete.UpdatePasswordRequest;
 import com.simada_backend.dto.response.athlete.AthleteProfileDTO;
-import com.simada_backend.dto.response.athlete.UploadAvatarResponse;
 import com.simada_backend.service.athlete.AthleteProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/athletes")
+@RequestMapping("/athletes")
 @CrossOrigin(origins = "http://localhost:3000")
 @RequiredArgsConstructor
 public class AthleteProfileController {

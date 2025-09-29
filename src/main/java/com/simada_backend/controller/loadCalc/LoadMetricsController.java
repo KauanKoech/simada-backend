@@ -15,7 +15,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/coach/athletes/{athleteId}")
+@RequestMapping("/coach/athletes/{athleteId}")
 public class LoadMetricsController {
 
     private final LoadMetricsService service;

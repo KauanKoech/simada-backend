@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 
 @Tag(name = "Recommendations")
 @RestController
-@RequestMapping(path = "/api/coach", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(path = "/coach", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 @Validated
 public class AIRecommendationsController {

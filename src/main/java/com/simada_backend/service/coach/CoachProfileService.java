@@ -76,15 +76,15 @@ public class CoachProfileService {
                         "Coach not found."
                 ));
 
-        String publicUrl = fileStorage.storeCoachAvatar(coachId, file);
-        coach.getUser().setPhoto(publicUrl);
+        String value = fileStorage.storeCoachAvatar(coachId, file);
+        coach.getUser().setPhoto(value);
         userRepo.save(coach.getUser());
-        return publicUrl;
+        return value;
     }
+
 
     @Transactional
     public void deleteOrTransferCoachAccount(Long sourceCoachId, String transferToEmail) {
-        // NÃO carrega Coach como entidade. Só pega os dados necessários:
         Long sourceUserId = coachRepo.findUserIdByCoachId(sourceCoachId)
                 .orElseThrow(() -> new BusinessException(
                         ErrorCode.RESOURCE_NOT_FOUND,
@@ -95,7 +95,6 @@ public class CoachProfileService {
         String sourceCoachName = coachRepo.findUserNameById(sourceUserId)
                 .orElse("Coach " + sourceCoachId);
 
-        // ===== TRANSFERÊNCIA =====
         if (StringUtils.hasText(transferToEmail)) {
             String email = transferToEmail.trim();
 
@@ -110,12 +109,10 @@ public class CoachProfileService {
                 throw new IllegalArgumentException("Destination email is the same as the source coach.");
             }
 
-            // garante coach destino via INSERT nativo (sem JPA)
             coachRepo.ensureCoachExistsForUser(destUserId);
             Long destCoachId = coachRepo.findCoachIdByUserId(destUserId)
                     .orElseThrow(() -> new IllegalStateException("Failed to create/retrieve destination Coach for " + email));
 
-            // reassign TUDO por coachId (NÃO por userId)
             coachRepo.reassignAthlete(sourceCoachId, destCoachId);
             coachRepo.reassignAthleteInvite(sourceCoachId, destCoachId);
             coachRepo.reassignSession(sourceCoachId, destCoachId);
@@ -123,11 +120,9 @@ public class CoachProfileService {
             coachRepo.reassignPsychoRiskScore(sourceCoachId, destCoachId);
             coachRepo.reassignPsychoFormInvite(sourceCoachId, destCoachId);
 
-            // Remove coach origem e depois o user origem (por id direto)
             coachRepo.deleteCoachRow(sourceCoachId);
             userRepo.deleteById(sourceUserId);
 
-            // e-mail pós-commit
             String destCoachName = coachRepo.findUserNameById(destUserId).orElse("Coach " + destCoachId);
             events.publishEvent(new CoachTransferCompletedEvent(
                     sourceCoachId, sourceCoachName, destCoachId, email, destCoachName
@@ -135,31 +130,24 @@ public class CoachProfileService {
             return;
         }
 
-        // ===== EXCLUSÃO =====
-        // snapshot dos users dos atletas ANTES
         List<Long> athleteUserIds = coachRepo.findAthleteUserIdsByCoach(sourceCoachId);
 
-        // psico
         coachRepo.deletePsychoAlertsByCoach(sourceCoachId);
         coachRepo.deletePsychoRiskScoresByCoach(sourceCoachId);
         coachRepo.deletePsychoFormAnswersByCoach(sourceCoachId);
         coachRepo.deletePsychoFormInvitesByCoach(sourceCoachId);
 
-        // sessões/métricas
         coachRepo.deleteMetricsByCoachViaSessions(sourceCoachId);
         coachRepo.deleteSessionsByCoach(sourceCoachId);
 
-        // atletas + extras + convites
         coachRepo.deleteAthleteExtrasByCoach(sourceCoachId);
         coachRepo.deleteAthleteInvitesByCoach(sourceCoachId);
         coachRepo.deleteAthletesByCoach(sourceCoachId);
 
-        // users dos atletas (agora pode apagar)
         if (!athleteUserIds.isEmpty()) {
             userRepo.deleteAllByIdInBatch(athleteUserIds);
         }
 
-        // user do coach e linha do coach
         userRepo.deleteById(sourceUserId);
         coachRepo.deleteCoachRow(sourceCoachId);
     }

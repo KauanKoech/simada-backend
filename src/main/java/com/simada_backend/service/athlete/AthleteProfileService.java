@@ -98,7 +98,7 @@ public class AthleteProfileService {
     @Transactional
     public String uploadAvatar(Long athleteId, MultipartFile file) {
         try {
-            var coach = athleteRepository.findById(athleteId)
+            var athlete = athleteRepository.findById(athleteId)
                     .orElseThrow(() -> new BusinessException(
                             ErrorCode.RESOURCE_NOT_FOUND,
                             HttpStatus.NOT_FOUND,
@@ -107,8 +107,8 @@ public class AthleteProfileService {
 
 
             String publicUrl = fileStorage.storeAthleteAvatar(athleteId, file);
-            coach.getUser().setPhoto(publicUrl);
-            userRepo.save(coach.getUser());
+            athlete.getUser().setPhoto(publicUrl);
+            userRepo.save(athlete.getUser());
             return publicUrl;
         } catch (Exception e) {
             throw new BusinessException(

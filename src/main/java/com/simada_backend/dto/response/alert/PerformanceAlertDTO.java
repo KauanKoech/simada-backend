@@ -3,8 +3,8 @@ package com.simada_backend.dto.response.alert;
 public record PerformanceAlertDTO(
         Long id,
         Long athleteId,
-        Long sessionId,
         Long coachId,
+        Long sessionId,
 
         Double acwr,
         Double monotony,

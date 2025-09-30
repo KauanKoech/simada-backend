@@ -18,9 +18,9 @@ public interface TrainingLoadAlertRepository extends CrudRepository<TrainingLoad
     @Query("""
             SELECT new com.simada_backend.dto.response.alert.PerformanceAlertDTO(
                 t.id, 
-                t.session.id,
                 t.athlete.id, 
                 t.coach.id,
+                t.session.id,
                 t.acwr, 
                 t.monotony, 
                 t.strain, 
@@ -68,11 +68,14 @@ public interface TrainingLoadAlertRepository extends CrudRepository<TrainingLoad
             JOIN Athlete a ON a.id = t.athlete.id
             JOIN AthleteExtra ax ON ax.athlete.id = t.athlete.id
             JOIN User u ON u.id = a.user.id
-            WHERE t.athlete.id = :athleteId                         
+            WHERE t.athlete.id = :athleteId
+              AND t.session.id = :sessionId
             """)
     Optional<PerformanceAnswerDTO> findAnswerBySessionAndAthlete(
+            @Param("sessionId") Long sessionId,
             @Param("athleteId") Long athleteId
     );
+
 
     Optional<TrainingLoadAlert> findByAthleteIdAndSessionId(Long athleteId, Long sessionId);
 

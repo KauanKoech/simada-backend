@@ -25,9 +25,21 @@ public class PerformanceService {
         return repo.findByCoachId(coachId);
     }
 
-    public Optional<PerformanceAnswerDTO> getBySessionAndAthlete(Long athleteId) {
-        return repo.findAnswerBySessionAndAthlete(athleteId);
+    public Optional<PerformanceAnswerDTO> getBySessionAndAthlete(Long sessionId, Long athleteId) {
+        System.out.println("➡️ getBySessionAndAthlete chamado com sessionId = " + sessionId +
+                ", athleteId = " + athleteId);
+
+        Optional<PerformanceAnswerDTO> result = repo.findAnswerBySessionAndAthlete(sessionId, athleteId);
+
+        if (result.isPresent()) {
+            System.out.println("✅ Encontrado PerformanceAnswerDTO: " + result.get());
+        } else {
+            System.out.println("⚠️ Nenhum PerformanceAnswerDTO encontrado para sessionId = " + sessionId +
+                    ", athleteId = " + athleteId);
+        }
+        return result;
     }
+
 
     @Transactional
     public void deleteAlert(Long alertId, Long coachId) {

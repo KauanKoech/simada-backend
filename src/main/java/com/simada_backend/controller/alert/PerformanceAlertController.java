@@ -30,12 +30,13 @@ public class PerformanceAlertController {
         return service.getAlertsByCoach(coachId);
     }
 
-    @GetMapping("/training-load/athlete/{athleteId}")
-    public ResponseEntity<PerformanceAnswerDTO> getAnswer(
+    @GetMapping("/training-load/session/{sessionId}/athlete/{athleteId}")
+    public ResponseEntity<PerformanceAnswerDTO> getAnswerByAthlete(
+            @PathVariable Long sessionId,
             @PathVariable Long athleteId
     ) {
-        return ResponseEntity.ok(
-                service.getBySessionAndAthlete(athleteId).orElse(null)
+        return ResponseEntity.of(
+                service.getBySessionAndAthlete(sessionId, athleteId)
         );
     }
 

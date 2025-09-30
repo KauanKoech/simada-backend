@@ -36,9 +36,10 @@ public class AIRecommendationsController {
     }
 
     @Operation(summary = "Generate performance recommendations for the athletes")
-    @PostMapping(path = "performance/{sessionId}/athletes/{athleteId}/recommendations",
+    @PostMapping(path = "/{coachId}/performance/{sessionId}/athletes/{athleteId}/recommendations",
             consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<PsyRecoResponseDTO>> recommendPerformance(
+            @PathVariable Long coachId,
             @PathVariable Long sessionId,
             @PathVariable Long athleteId,
             @Valid @RequestBody PerfAlertRecoRequest body

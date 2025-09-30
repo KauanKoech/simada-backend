@@ -18,6 +18,7 @@ public interface TrainingLoadAlertRepository extends CrudRepository<TrainingLoad
     @Query("""
             SELECT new com.simada_backend.dto.response.alert.PerformanceAlertDTO(
                 t.id, 
+                t.session.id,
                 t.athlete.id, 
                 t.coach.id,
                 t.acwr, 

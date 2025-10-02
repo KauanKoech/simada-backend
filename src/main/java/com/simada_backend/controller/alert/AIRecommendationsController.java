@@ -24,7 +24,7 @@ public class AIRecommendationsController {
     private final AIRecommendationAlertService service;
 
     @Operation(summary = "Generate psycho emotional recommendations for the athletes")
-    @PostMapping(path = "/psy-form/{sessionId}/athletes/{athleteId}/recommendations",
+    @PostMapping(path = "/{coachId}/psy-form/{sessionId}/athletes/{athleteId}/recommendations",
             consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<PsyRecoResponseDTO>> recommendPsycho(
             @PathVariable Long sessionId,

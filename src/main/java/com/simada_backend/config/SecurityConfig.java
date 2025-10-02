@@ -40,7 +40,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/static/**"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/coach/psy-form/*/athletes/*/recommendations").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/*/coach/psy-form/*/athletes/*/recommendations").permitAll()
                         .requestMatchers(HttpMethod.POST, "/coach/*/performance/*/athletes/*/recommendations").permitAll()
                         .anyRequest().authenticated()
                 )

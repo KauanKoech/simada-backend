@@ -14,4 +14,8 @@ public interface PsyRecommendationRepository extends JpaRepository<PsyRecommenda
     @Modifying
     @Query("delete from PsyRecommendation r where r.athlete.id = :athleteId")
     void deleteByAthleteId(@Param("athleteId") Long athleteId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from PsyRecommendation pr where pr.session.id = :sessionId")
+    void deleteBySessionId(@Param("sessionId") Long sessionId);
 }

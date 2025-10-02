@@ -1,6 +1,7 @@
 package com.simada_backend.repository.recommendation;
 
 import com.simada_backend.model.recommendation.PerfRecommendation;
+import com.simada_backend.model.session.Session;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -14,5 +15,9 @@ public interface PerfRecommendationRepository extends JpaRepository<PerfRecommen
     @Modifying
     @Query("delete from PerfRecommendation r where r.athlete.id = :athleteId")
     void deleteByAthleteId(@Param("athleteId") Long athleteId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from PerfRecommendation pr where pr.session.id = :sessionId")
+    void deleteBySessionId(@Param("sessionId") Long sessionId);
 }
 

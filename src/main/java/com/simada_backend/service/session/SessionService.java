@@ -10,6 +10,8 @@ import com.simada_backend.repository.loadCalc.SessionLoadRepo;
 import com.simada_backend.repository.psycho.PsychoFormAnswerRepository;
 import com.simada_backend.repository.psycho.PsychoFormInviteRepository;
 import com.simada_backend.repository.psycho.PsychoRiskScoreRepository;
+import com.simada_backend.repository.recommendation.PerfRecommendationRepository;
+import com.simada_backend.repository.recommendation.PsyRecommendationRepository;
 import com.simada_backend.repository.session.MetricsRepository;
 import com.simada_backend.repository.session.CoachSessionsRepository;
 import com.simada_backend.repository.coach.CoachRepository;
@@ -35,6 +37,8 @@ public class SessionService {
     private final PsychoAlertRepository psychoAlertRepository;
     private final PsychoFormAnswerRepository psychoFormAnswerRepository;
     private final PsychoFormInviteRepository psychoFormInviteRepository;
+    private final PsyRecommendationRepository psyRecommendationRepository;
+    private final PerfRecommendationRepository perfRecommendationRepository;
 
     public List<CoachSessionDTO> getSessionsCoach(
             int coachId,
@@ -98,6 +102,8 @@ public class SessionService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sessão não encontrada"));
 
 
+        perfRecommendationRepository.deleteBySessionId(sessionId.longValue());
+        psyRecommendationRepository.deleteBySessionId(sessionId.longValue());
         psychoAlertRepository.deleteBySessionId(sessionId.longValue());
         psychoRiskScoreRepo.deleteBySessionId(sessionId.longValue());
         psychoFormInviteRepository.deleteBySessionId(sessionId.longValue());

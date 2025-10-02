@@ -1,6 +1,7 @@
 package com.simada_backend.repository.psycho;
 
 import com.simada_backend.model.psycho.PsychoRiskScore;
+import com.simada_backend.model.session.Session;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -43,6 +44,12 @@ public interface PsychoRiskScoreRepository extends JpaRepository<PsychoRiskScore
     @Modifying
     @Query("delete from PsyRecommendation r where r.athlete.id = :athleteId")
     void deleteByAthleteId(@Param("athleteId") Long athleteId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from PsychoRiskScore pr where pr.session.id = :sessionId")
+    void deleteBySessionId(@Param("sessionId") Long sessionId);
+
+    List<PsychoRiskScore> session(Session session);
 
     interface RiskCardRow {
         Long getAthlete_id();

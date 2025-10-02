@@ -143,4 +143,8 @@ public interface PsychoAlertRepository extends JpaRepository<PsychoAlert, Long> 
     @Modifying
     @Query("delete from PsychoAlert a where a.athlete.id = :athleteId")
     void deleteByAthleteId(@Param("athleteId") Long athleteId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from PsychoAlert pa where pa.session.id = :sessionId")
+    void deleteBySessionId(@Param("sessionId") Long sessionId);
 }

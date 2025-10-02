@@ -92,8 +92,8 @@ public class InviteService {
             return;
         }
         try {
-            String url = org.springframework.web.util.UriComponentsBuilder
-                    .fromHttpUrl(appFrontUrl)        // ex.: https://simada-frontend.vercel.app
+            String url = UriComponentsBuilder
+                    .fromHttpUrl(appFrontUrl)
                     .path("/signup")
                     .queryParam("invite", inv.getToken())
                     .build()

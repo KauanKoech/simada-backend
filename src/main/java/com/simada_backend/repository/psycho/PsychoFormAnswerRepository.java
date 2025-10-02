@@ -68,4 +68,8 @@ public interface PsychoFormAnswerRepository extends JpaRepository<PsychoFormAnsw
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("delete from PsychoFormAnswer a where a.athlete.id = :athleteId")
     void deleteByAthleteId(@Param("athleteId") Long athleteId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from PsychoFormAnswer pfa where pfa.idSession.id = :sessionId")
+    void deleteBySessionId(@Param("sessionId") Long sessionId);
 }

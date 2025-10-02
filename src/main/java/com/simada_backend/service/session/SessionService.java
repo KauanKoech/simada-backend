@@ -2,12 +2,19 @@ package com.simada_backend.service.session;
 
 import com.simada_backend.dto.request.session.RegisterSessionRequest;
 import com.simada_backend.dto.response.coach.CoachSessionDTO;
+import com.simada_backend.model.psycho.PsychoFormInvite;
 import com.simada_backend.model.session.Session;
 import com.simada_backend.model.Coach;
+import com.simada_backend.repository.alert.PsychoAlertRepository;
+import com.simada_backend.repository.loadCalc.SessionLoadRepo;
+import com.simada_backend.repository.psycho.PsychoFormAnswerRepository;
+import com.simada_backend.repository.psycho.PsychoFormInviteRepository;
+import com.simada_backend.repository.psycho.PsychoRiskScoreRepository;
 import com.simada_backend.repository.session.MetricsRepository;
 import com.simada_backend.repository.session.CoachSessionsRepository;
 import com.simada_backend.repository.coach.CoachRepository;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -17,17 +24,17 @@ import java.util.List;
 import java.util.Objects;
 
 @Service
+@RequiredArgsConstructor
 public class SessionService {
 
     private final CoachSessionsRepository sessionsRepo;
     private final CoachRepository coachRepo;
     private final MetricsRepository metricasRepo;
-
-    public SessionService(CoachSessionsRepository sessionsRepo, CoachRepository coachRepo, MetricsRepository metricasRepo) {
-        this.sessionsRepo = Objects.requireNonNull(sessionsRepo);
-        this.coachRepo = Objects.requireNonNull(coachRepo);
-        this.metricasRepo = Objects.requireNonNull(metricasRepo);
-    }
+    private final SessionLoadRepo sessionLoadRepo;
+    private final PsychoRiskScoreRepository psychoRiskScoreRepo;
+    private final PsychoAlertRepository psychoAlertRepository;
+    private final PsychoFormAnswerRepository psychoFormAnswerRepository;
+    private final PsychoFormInviteRepository psychoFormInviteRepository;
 
     public List<CoachSessionDTO> getSessionsCoach(
             int coachId,
@@ -90,6 +97,12 @@ public class SessionService {
         Session s = sessionsRepo.findById(sessionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sessão não encontrada"));
 
+
+        psychoAlertRepository.deleteBySessionId(sessionId.longValue());
+        psychoRiskScoreRepo.deleteBySessionId(sessionId.longValue());
+        psychoFormInviteRepository.deleteBySessionId(sessionId.longValue());
+        psychoFormAnswerRepository.deleteBySessionId(sessionId.longValue());
+        sessionLoadRepo.deleteBySessionId(sessionId.longValue());
         metricasRepo.deleteBySessionId(Long.valueOf(sessionId));
         sessionsRepo.delete(s);
     }

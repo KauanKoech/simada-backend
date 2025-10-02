@@ -15,4 +15,8 @@ public interface PsychoFormInviteRepository extends JpaRepository<PsychoFormInvi
     @Modifying
     @Query("delete from PsychoFormInvite i where i.idAthlete.id = :athleteId")
     void deleteByAthleteId(@Param("athleteId") Long athleteId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from PsychoFormInvite pfi where pfi.idSession.id = :sessionId")
+    void deleteBySessionId(@Param("sessionId") Long sessionId);
 }

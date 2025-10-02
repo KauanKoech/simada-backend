@@ -27,6 +27,7 @@ public class AIRecommendationsController {
     @PostMapping(path = "/{coachId}/psy-form/{sessionId}/athletes/{athleteId}/recommendations",
             consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<PsyRecoResponseDTO>> recommendPsycho(
+            @PathVariable Long coachId,
             @PathVariable Long sessionId,
             @PathVariable Long athleteId,
             @Valid @RequestBody PsyAlertRecoRequest body

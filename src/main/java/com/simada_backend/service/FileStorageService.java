@@ -11,8 +11,7 @@ import java.util.Set;
 @Service
 public class FileStorageService {
 
-    // até ~300 KB por imagem (ajuste conforme sua realidade)
-    private static final long MAX_BYTES = 300_000;
+    private static final long MAX_BYTES = 500_000;
     private static final Set<String> ALLOWED = Set.of(
             "image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"
     );

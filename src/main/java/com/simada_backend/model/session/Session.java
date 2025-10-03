@@ -24,7 +24,8 @@ public class Session {
     @JoinColumn(name = "id_coach", nullable = false)
     private Coach coach;
 
-    @Column(name = "coach_photo", length = 255)
+    @Lob
+    @Column(name = "coach_photo", columnDefinition = "MEDIUMTEXT")
     private String coach_Photo;
 
     @Column(name = "date", nullable = false)

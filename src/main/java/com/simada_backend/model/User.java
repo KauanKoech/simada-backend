@@ -24,7 +24,8 @@ public class User {
     @Column(name = "password")
     private String password;
 
-    @Column(name = "photo")
+    @Lob
+    @Column(name = "photo", columnDefinition = "MEDIUMTEXT")
     private String photo;
 
     @Column(name = "gender")
